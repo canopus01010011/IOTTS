@@ -1,0 +1,100 @@
+equiptrack-backend/
+│
+├── firebase-service-account.json      🔥 Firebase credentials 
+├── .env                                ✅ Environment variables
+├── .gitignore                          ✅ Git ignore
+├── docker-compose.yml                  ✅ PostgreSQL, Redis, Mosquitto
+├── package.json                        ✅ Dependencies
+├── package-lock.json                   ✅ Locked dependencies
+├── tsconfig.json                       ✅ TypeScript config
+│
+├── scripts/                            🧪 Test scripts
+│   ├── test-mqtt.js                    ✅ MQTT test script 
+│   └── test-firebase.js                ✅ Firebase test script 
+│
+├── src/
+│   │
+│   ├── config/                         ⚙️ Configuration files
+│   │   ├── database.ts                 ✅ PostgreSQL connection
+│   │   ├── env.ts                      ✅ Environment variables
+│   │   ├── mqttConfig.ts               ✅ MQTT configuration 
+│   │   └── cloudinary.ts               ✅ Cloudinary configuration 
+│   │
+│   ├── controllers/                    🎮 Request handlers
+│   │   ├── authController.ts           ✅ Login, register, refresh 
+│   │   ├── userController.ts           ✅ User CRUD 
+│   │   ├── missionController.ts        ✅ Mission CRUD 
+│   │   ├── equipmentController.ts      ✅ Equipment CRUD 
+│   │   ├── siteController.ts           ✅ Site CRUD 
+│   │   ├── gpsController.ts            ✅ GPS endpoints 
+│   │   ├── uploadController.ts         ✅ File upload 
+│   │   ├── deliveryController.ts       ✅ QR scan 
+│   │   ├── notificationController.ts   ✅ Push notifications 
+│   │   ├── reportController.ts         ✅ Reports 
+│   │   └── statController.ts           ✅ Statistics 
+│   │
+│   ├── middleware/                     🔒 Middleware & validation
+│   │   ├── auth.ts                     ✅ JWT authentication 
+│   │   ├── errorHandler.ts             ✅ Global error handler
+│   │   ├── roleCheck.ts                ✅ RBAC 
+│   │   ├── upload.ts                   ✅ Multer config 
+│   │   └── validation/
+│   │       ├── validate.ts             ✅ Joi validator
+│   │       ├── userValidation.ts       ✅ User schemas
+│   │       ├── missionValidation.ts    ✅ Mission schemas
+│   │       ├── equipmentValidation.ts  ✅ Equipment schemas
+│   │       └── siteValidation.ts       ✅ Site schemas
+│   │
+│   ├── models/                         📊 Database models
+│   │   ├── index.ts                    ✅ Model associations
+│   │   ├── User.ts                     ✅ User model 
+│   │   ├── Mission.ts                  ✅ Mission model 
+│   │   ├── Equipment.ts                ✅ Equipment model 
+│   │   ├── Site.ts                     ✅ Site model 
+│   │   ├── Delivery.ts                 ✅ Delivery model 
+│   │   ├── GPSLog.ts                   ✅ GPS log model 
+│   │   └── Notification.ts             ✅ Notification model 
+│   │
+│   ├── mqtt/                           📡 MQTT integration
+│   │   └── mqttBridge.ts               ✅ MQTT subscriber 
+│   │
+│   ├── routes/                         🛣️ API routes
+│   │   ├── index.ts                    ✅ Root routes
+│   │   ├── authRoutes.ts               ✅ Auth endpoints 
+│   │   ├── userRoutes.ts               ✅ User endpoints 
+│   │   ├── missionRoutes.ts            ✅ Mission endpoints 
+│   │   ├── equipmentRoutes.ts          ✅ Equipment endpoints 
+│   │   ├── siteRoutes.ts               ✅ Site endpoints 
+│   │   ├── gpsRoutes.ts                ✅ GPS endpoints
+│   │   ├── uploadRoutes.ts             ✅ Upload endpoints 
+│   │   ├── deliveryRoutes.ts           ✅ Delivery endpoints 
+│   │   ├── notificationRoutes.ts       ✅ Notification endpoints 
+│   │   └── reportRoutes.ts             ✅ Report & stats endpoints 
+│   │
+│   ├── services/                       💼 Business logic
+│   │   ├── userService.ts              ✅ User logic 
+│   │   ├── missionService.ts           ✅ Mission logic 
+│   │   ├── equipmentService.ts         ✅ Equipment logic 
+│   │   ├── siteService.ts              ✅ Site logic 
+│   │   ├── gpsService.ts               ✅ GPS logic 
+│   │   ├── uploadService.ts            ✅ Cloudinary logic 
+│   │   ├── aiService.ts                ✅ AI validation 
+│   │   ├── deliveryService.ts          ✅ QR scan logic 
+│   │   ├── notificationService.ts      ✅ FCM logic 
+│   │   ├── reportService.ts            ✅ Report logic
+│   │   └── statService.ts              ✅ Statistics logic
+│   │
+│   ├── sockets/                        🔌 WebSocket handlers
+│   │   └── socketHandler.ts            ✅ Socket.IO 
+│   │
+│   ├── types/                          📝 TypeScript types
+│   │   └── express.d.ts                ✅ Request.user type
+│   │
+│   ├── utils/                          🛠️ Utilities
+│   │   ├── jwt.ts                      ✅ JWT functions 
+│   │   └── syncDatabase.ts             ✅ DB sync utility
+│   │
+│   ├── app.ts                          🚀 Express app (all routes)
+│   └── server.ts                       🚀 Entry point (HTTP + WS + MQTT)
+│
+└── node_modules/                       📦 Dependencies

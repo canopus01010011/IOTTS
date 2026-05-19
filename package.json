@@ -1,0 +1,18 @@
+{
+  "name": "equiptrack-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start:backend": "npm --prefix backend run dev",
+    "start:web": "npm --prefix web_admin run dev",
+    "start:mobile": "npm --prefix mobile_app run start",
+    "start:all": "npx concurrently \"npm run start:backend\" \"npm run start:web\" \"npm run start:mobile\""
+  },
+  "dependencies": {
+    "cloudinary": "^2.10.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
