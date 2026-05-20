@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import api from '../services/api'
+import { formatEquipmentList, formatDateTime } from '../utils/missionFormat'
 import Sidebar from '../components/Sidebar'
 import TopBar  from '../components/TopBar'
 
@@ -30,12 +31,8 @@ function formatMission(m) {
     site: site.name || m.site_id || '—',
     driver: m.driver?.full_name || '—',
     technicien: m.technician?.full_name || '—',
-    equip: Array.isArray(m.equipment_list)
-      ? m.equipment_list.map((e) => `${e.equipment_id} ×${e.quantity}`).join(', ')
-      : '—',
-    date: m.scheduled_start_date
-      ? new Date(m.scheduled_start_date).toLocaleDateString('fr-FR')
-      : '—',
+    equip: formatEquipmentList(m.equipment_list),
+    date: formatDateTime(m.scheduled_start_date),
     statut: STATUS_LABEL[m.status] || m.status || '—',
     statusValue: m.status,
   }

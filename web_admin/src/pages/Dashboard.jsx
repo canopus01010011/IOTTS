@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import api from '../services/api'
+import { formatEquipmentList, formatDateTime } from '../utils/missionFormat'
 import Sidebar from '../components/Sidebar'
 import TopBar  from '../components/TopBar'
 
@@ -33,12 +35,8 @@ const formatMission = (m) => ({
   ref: m.id,
   site: m.Site?.name || m.site_id || 'N/A',
   driver: m.driver?.full_name || 'N/A',
-  equip: Array.isArray(m.equipment_list)
-    ? m.equipment_list.map(e => `${e.equipment_id} x${e.quantity}`).join(', ')
-    : 'N/A',
-  date: m.scheduled_start_date
-    ? new Date(m.scheduled_start_date).toLocaleDateString('fr-FR')
-    : 'N/A',
+  equip: formatEquipmentList(m.equipment_list),
+  date: formatDateTime(m.scheduled_start_date),
   statut: statusMap[m.status] || m.status,
 })
 
@@ -61,8 +59,8 @@ export default function Dashboard() {
     { label: 'En cours',              value: stats.inProgressMissions, color: '#60a5fa' },
     { label: 'Terminées',             value: stats.completedMissions,  color: '#4ade80' },
     { label: 'En attente',            value: stats.pendingMissions,    color: '#fbbf24' },
-    { label: 'Techniciens',           value: stats.totalTechnicians,   color: '#a78bfa' },
-    { label: 'Conducteurs',           value: stats.totalDrivers,       color: '#94a3b8' },
+    { label: 'Techniciens',           value: stats.totalTechnicians,   color: '#a78bfa', to: '/dashboard/technicians' },
+    { label: 'Conducteurs',           value: stats.totalDrivers,       color: '#94a3b8', to: '/dashboard/drivers' },
   ]
 
   return (
@@ -77,16 +75,33 @@ export default function Dashboard() {
             display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
             gap: 12, marginBottom: 24
           }}>
-            {cards.map(c => (
-              <div key={c.label} style={{
+            {cards.map(c => {
+              const inner = (
+                <>
+                  <p style={{ fontSize: 26, fontWeight: 500, color: c.color }}>{c.value}</p>
+                  <p style={{ fontSize: 12, color: 'rgba(148,163,184,.5)', marginTop: 4 }}>{c.label}</p>
+                </>
+              )
+              const cardStyle = {
                 background: '#111827',
                 border: '0.5px solid rgba(59,130,246,.15)',
-                borderRadius: 12, padding: '18px 20px'
-              }}>
-                <p style={{ fontSize: 26, fontWeight: 500, color: c.color }}>{c.value}</p>
-                <p style={{ fontSize: 12, color: 'rgba(148,163,184,.5)', marginTop: 4 }}>{c.label}</p>
-              </div>
-            ))}
+                borderRadius: 12,
+                padding: '18px 20px',
+                textDecoration: 'none',
+                display: 'block',
+                cursor: c.to ? 'pointer' : 'default',
+                transition: 'border-color .15s',
+              }
+              return c.to ? (
+                <Link key={c.label} to={c.to} style={cardStyle}>
+                  {inner}
+                </Link>
+              ) : (
+                <div key={c.label} style={cardStyle}>
+                  {inner}
+                </div>
+              )
+            })}
           </div>
 
           {/* Missions récentes */}

@@ -88,7 +88,9 @@ export function QRScannerView({
         <View style={styles.overlayBottom}>
           <Text style={styles.title}>Scan QR Code</Text>
           <Text style={styles.subtitle}>
-            Place the code inside the glowing frame.
+            {role === "driver"
+              ? "Scannez le QR du conteneur à l'entrepôt."
+              : "Scannez le QR de la mission sur le site."}
           </Text>
         </View>
       </View>
@@ -96,12 +98,17 @@ export function QRScannerView({
       <View style={styles.card}>
         {scanned && data ? (
           <>
-            <Text style={styles.cardTitle}>Mission Details</Text>
-            <Text style={styles.cardText}>Mission ID: {data.missionId}</Text>
-            <Text style={styles.cardText}>Site: {data.site || "Unknown"}</Text>
-            <Text style={styles.cardText}>
-              Location: {data.location || "Unknown"}
+            <Text style={styles.cardTitle}>
+              {data.scanType === "container" ? "Conteneur" : "Mission"}
             </Text>
+            {data.scanType === "container" ? (
+              <Text style={styles.cardText}>QR conteneur: {data.qrCode}</Text>
+            ) : (
+              <>
+                <Text style={styles.cardText}>Mission: {data.missionId}</Text>
+                <Text style={styles.cardText}>Site: {data.site || "—"}</Text>
+              </>
+            )}
 
             <Pressable
               style={[
@@ -118,8 +125,8 @@ export function QRScannerView({
                 {confirming
                   ? "Confirming..."
                   : role === "driver"
-                    ? "Start Delivery"
-                    : "Confirm Package"}
+                    ? "Démarrer livraison (entrepôt)"
+                    : "Confirmer arrivée sur site"}
               </Text>
             </Pressable>
 

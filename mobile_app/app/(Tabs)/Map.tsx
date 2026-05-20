@@ -1,4 +1,4 @@
-import { Phone } from "lucide-react-native";
+import { Phone, Truck } from "lucide-react-native";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -8,13 +8,14 @@ import {
   Text,
   View,
 } from "react-native";
-import MapView, { Marker, Region } from "react-native-maps";
+import MapView, { Marker, Polyline, Region } from "react-native-maps";
 import MapViewDirections from "react-native-maps-directions";
 import * as Linking from "expo-linking";
 
 import { GOOGLE_API_KEY } from "@/constants/config";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "@/hooks/useLocation";
+import { useLiveGps } from "@/hooks/useLiveGps";
 import { useMissions } from "@/hooks/useMissions";
 
 const { width, height } = Dimensions.get("window");
@@ -23,6 +24,17 @@ export default function MapScreen() {
   const { location, loading: locationLoading, enabled } = useLocation();
   const { activeMission } = useMissions();
   const { user } = useAuth();
+
+  const containerId = (activeMission?.raw as Record<string, unknown>)
+    ?.container_id as string | undefined;
+
+  const {
+    latitude: iotLat,
+    longitude: iotLng,
+    hasPosition: hasIotPosition,
+    battery: iotBattery,
+    serial: iotSerial,
+  } = useLiveGps(containerId);
 
   const [distance, setDistance] = useState("");
   const [duration, setDuration] = useState("");
@@ -38,6 +50,11 @@ export default function MapScreen() {
           latitude: Number(site.latitude),
           longitude: Number(site.longitude),
         }
+      : null;
+
+  const iotCoordinate =
+    hasIotPosition && iotLat != null && iotLng != null
+      ? { latitude: iotLat, longitude: iotLng }
       : null;
 
   const contactPhone =
@@ -68,19 +85,49 @@ export default function MapScreen() {
     );
   }
 
+  if (activeMission.statusRaw !== "in-progress") {
+    return (
+      <View style={styles.center}>
+        <Text style={{ color: "white", textAlign: "center", paddingHorizontal: 24 }}>
+          Mission {activeMission.id} — en attente
+        </Text>
+        <Text style={{ color: "#9ca3af", marginTop: 8, textAlign: "center", paddingHorizontal: 24 }}>
+          Le conducteur doit scanner le QR du conteneur à l&apos;entrepôt pour activer le suivi GPS.
+        </Text>
+      </View>
+    );
+  }
+
   const region: Region = {
-    latitude: location?.latitude ?? destination.latitude,
-    longitude: location?.longitude ?? destination.longitude,
-    latitudeDelta: 0.05,
-    longitudeDelta: 0.05,
+    latitude: iotCoordinate?.latitude ?? location?.latitude ?? destination.latitude,
+    longitude: iotCoordinate?.longitude ?? location?.longitude ?? destination.longitude,
+    latitudeDelta: 0.08,
+    longitudeDelta: 0.08,
   };
 
   return (
     <View style={styles.container}>
       <MapView style={styles.map} region={region} showsUserLocation={enabled}>
-        {location && <Marker coordinate={location} title="You" />}
+        {location && <Marker coordinate={location} title="You" pinColor="#3b82f6" />}
 
-        <Marker coordinate={destination} title={activeMission.site} />
+        <Marker coordinate={destination} title={activeMission.site} pinColor="#22c55e" />
+
+        {iotCoordinate && (
+          <Marker coordinate={iotCoordinate} title="Container (IoT)">
+            <View style={styles.iotMarker}>
+              <Truck color="#fff" size={18} />
+            </View>
+          </Marker>
+        )}
+
+        {iotCoordinate && (
+          <Polyline
+            coordinates={[iotCoordinate, destination]}
+            strokeColor="#60a5fa"
+            strokeWidth={3}
+            lineDashPattern={[8, 6]}
+          />
+        )}
 
         {showDirections && (
           <MapViewDirections
@@ -104,6 +151,14 @@ export default function MapScreen() {
         <Text style={styles.info}>
           📦 {activeMission.items} items • {activeMission.status}
         </Text>
+
+        {containerId ? (
+          <Text style={styles.info}>
+            {hasIotPosition
+              ? `📡 IoT ${iotSerial || "GPS"} • ${iotLat?.toFixed(5)}, ${iotLng?.toFixed(5)}${iotBattery != null ? ` • 🔋 ${iotBattery}%` : ""}`
+              : "⏳ Waiting for IoT GPS simulation…"}
+          </Text>
+        ) : null}
 
         {showDirections && (
           <Text style={styles.info}>
@@ -142,6 +197,13 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     color: "#9ca3af",
+  },
+  iotMarker: {
+    backgroundColor: "#1d4ed8",
+    padding: 8,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: "#60a5fa",
   },
   card: {
     position: "absolute",

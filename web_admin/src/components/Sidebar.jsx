@@ -8,7 +8,10 @@ const links = [
   { to: '/dashboard/historique',     label: 'Historique',        icon: '⏱' },
   { to: '/dashboard/rapports',       label: 'Rapports',          icon: '📋' },
   { to: '/dashboard/create-user',    label: 'Créer utilisateur', icon: '👤' },
-  { to: '/dashboard/drivers',        label: 'Drivers',           icon: '◈' },
+  { to: '/dashboard/drivers',        label: 'Conducteurs',       icon: '🚛' },
+  { to: '/dashboard/technicians',    label: 'Techniciens',       icon: '🔧' },
+  { to: '/dashboard/sites',          label: 'Sites',             icon: '📍' },
+  { to: '/dashboard/containers',    label: 'Conteneurs',        icon: '📦' },
   { to: '/dashboard/settings',       label: 'Paramètres',        icon: '⚙' },
 ]
 
@@ -47,7 +50,7 @@ export default function Sidebar() {
           <NavLink
             key={link.to}
             to={link.to}
-            end
+            end={link.to === '/dashboard'}
             className={({ isActive }) =>
               `flex items-center gap-3 px-4 py-2.5 text-sm transition-all ${
                 isActive ? 'font-medium' : 'hover:opacity-80'

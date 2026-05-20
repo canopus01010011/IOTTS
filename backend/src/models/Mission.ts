@@ -6,6 +6,7 @@ import { generateCode } from '../utils/idGenerator.js';
 export interface MissionEquipment {
   equipment_id: string;
   quantity: number;
+  label?: string;
 }
 
 interface MissionAttributes {
@@ -21,11 +22,12 @@ interface MissionAttributes {
   container_id?: string;
   site_id: string;
   creation_date?: Date;
+  reminder_sent_at?: Date | null;
 }
 
 type MissionCreationAttributes = Optional<
   MissionAttributes,
-  'id' | 'status' | 'start_date' | 'end_date' | 'container_id' | 'creation_date'
+  'id' | 'status' | 'start_date' | 'end_date' | 'container_id' | 'creation_date' | 'reminder_sent_at'
 >;
 
 class Mission extends Model<MissionAttributes, MissionCreationAttributes> implements MissionAttributes {
@@ -41,6 +43,7 @@ class Mission extends Model<MissionAttributes, MissionCreationAttributes> implem
   public container_id?: string;
   public site_id!: string;
   public creation_date!: Date;
+  public reminder_sent_at?: Date | null;
 }
 
 Mission.init({
@@ -57,11 +60,11 @@ Mission.init({
     defaultValue: 'pending'
   },
   scheduled_start_date: {
-    type: DataTypes.DATEONLY,
+    type: DataTypes.DATE,
     allowNull: false
   },
   scheduled_end_date: {
-    type: DataTypes.DATEONLY,
+    type: DataTypes.DATE,
     allowNull: false
   },
   start_date: {
@@ -108,7 +111,11 @@ Mission.init({
       model: 'sites',
       key: 'site_id'
     }
-  }
+  },
+  reminder_sent_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
 }, {
   sequelize,
   tableName: 'missions',

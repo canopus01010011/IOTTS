@@ -8,15 +8,18 @@ export class DeliveryController {
    */
   static async scanQR(req: Request, res: Response, next: NextFunction) {
     try {
-      const { missionId } = req.body;
+      const { missionId, qrCode } = req.body;
 
-      // Validation
-      if (!missionId) {
-        return res.status(400).json({ error: 'missionId is required' });
+      if (!missionId && !qrCode) {
+        return res.status(400).json({
+          error: 'missionId (technicien sur site) ou qrCode (conteneur entrepôt) requis',
+        });
       }
+
       const result = await DeliveryService.processScan({
         missionId,
-        userId: req.user?.id as string ,
+        qrCode,
+        userId: req.user?.id as string,
         userRole: req.user?.role as any,
       });
 

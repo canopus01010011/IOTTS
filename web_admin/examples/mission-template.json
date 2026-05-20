@@ -1,0 +1,50 @@
+{
+  "reference": "MSN-20260521-0001",
+  "scheduled_start_date": "2026-05-21T08:00:00.000Z",
+  "scheduled_end_date": "2026-05-21T18:00:00.000Z",
+  "status": "pending",
+  "site": {
+    "name": "Tour B12 — Centre ville",
+    "address": "12 Avenue Habib Bourguiba, Tunis",
+    "latitude": 36.8065,
+    "longitude": 10.1815
+  },
+  "driver": {
+    "full_name": "Ahmed Conducteur",
+    "email": "ahmed.driver@example.com",
+    "phone": "+21620000001"
+  },
+  "technician": {
+    "full_name": "Sami Technicien",
+    "email": "sami.tech@example.com",
+    "phone": "+21620000002"
+  },
+  "equipment_list": [
+    {
+      "type": "Fibre optique",
+      "label": "Fibre optique",
+      "serial_number": "SN-FIB-2026-001",
+      "model": "FO-48C",
+      "quantity": 1,
+      "equipment_status": "in_use"
+    },
+    {
+      "type": "Câblage réseau",
+      "label": "Câblage réseau",
+      "serial_number": "SN-CAB-2026-002",
+      "model": "CAT6-500M",
+      "quantity": 2,
+      "equipment_status": "in_use"
+    }
+  ],
+  "container": {
+    "qr_code": "CTR-QR-NEW-001",
+    "capacity": 120,
+    "status": "available",
+    "gps_device": {
+      "device_serial_number": "GPS-SN-NEW-001",
+      "battery_level": 100,
+      "device_status": "active"
+    }
+  }
+}

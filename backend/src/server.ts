@@ -5,6 +5,7 @@ import { createServer } from 'http';
 import sequelize from './config/database.js';
 import { initializeSocket } from './sockets/socketHandler.js';
 import { startMQTT } from './mqtt/mqttBridge.js';
+import { startMissionReminderScheduler } from './schedulers/missionReminderScheduler.js';
 
 const PORT = process.env.PORT || 5000;
 
@@ -22,6 +23,7 @@ async function startServer() {
     
     // Start MQTT Bridge
     startMQTT();
+    startMissionReminderScheduler();
 
     // Sync database
     await sequelize.sync({ alter: true });

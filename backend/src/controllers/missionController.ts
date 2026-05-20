@@ -22,7 +22,19 @@ export class MissionController {
       }
 
       const result = await MissionService.createMissionFromJson(req.body, req.user.id);
-      res.status(201).json(result);
+      res.status(201).json({ success: true, ...result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getImportTemplate(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (req.user?.role !== 'admin') {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+      const data = await MissionService.getImportTemplate();
+      res.json({ success: true, data });
     } catch (error) {
       next(error);
     }

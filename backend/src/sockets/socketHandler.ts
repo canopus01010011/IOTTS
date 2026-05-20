@@ -3,10 +3,20 @@ import { Server as SocketServer, Socket } from 'socket.io';
 
 let io: SocketServer | null = null;
 
+export interface GpsUpdatePayload {
+  gpsId: string;
+  deviceSerial: string;
+  containerId?: string;
+  lat: number;
+  lng: number;
+  heading?: number;
+  battery?: number;
+}
+
 export const initializeSocket = (server: HttpServer) => {
   io = new SocketServer(server, {
     cors: {
-      origin: '*', // In production, replace with your frontend URL
+      origin: '*',
       methods: ['GET', 'POST'],
       credentials: true,
     },
@@ -36,14 +46,17 @@ export const getIO = () => {
   return io;
 };
 
-export const emitGPSUpdate = (equipmentId: string, equipmentName: string, lat: number, lng: number) => {
+export const emitGPSUpdate = (payload: GpsUpdatePayload) => {
   if (!io) return;
-  
+
   io.to('tracking').emit('gps-update', {
-    equipmentId,
-    equipmentName,
-    latitude: lat,
-    longitude: lng,
+    equipmentId: payload.gpsId,
+    equipmentName: payload.deviceSerial,
+    containerId: payload.containerId,
+    latitude: payload.lat,
+    longitude: payload.lng,
+    heading: payload.heading,
+    battery: payload.battery,
     timestamp: new Date().toISOString(),
   });
 };

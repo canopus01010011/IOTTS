@@ -14,11 +14,13 @@ import userRoutes from './routes/userRoutes.js';
 import missionRoutes from './routes/missionRoutes.js';
 import equipmentRoutes from './routes/equipmentRoutes.js';
 import siteRoutes from './routes/siteRoutes.js';
+import containerRoutes from './routes/containerRoutes.js';
 import gpsRoutes from './routes/gpsRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import deliveryRoutes from './routes/deliveryRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
+import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
 
@@ -38,6 +40,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/missions', missionRoutes);
 app.use('/api/equipment', equipmentRoutes);
 app.use('/api/sites', siteRoutes);
+app.use('/api/containers', containerRoutes);
 app.use('/api/gps', gpsRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/deliveries', deliveryRoutes);
@@ -88,10 +91,6 @@ app.use((req: Request, res: Response) => {
   res.status(404).json({ error: `Route ${req.originalUrl} not found` });
 });
 
-// Global error handler
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({ error: 'Internal server error' });
-});
+app.use(errorHandler);
 
 export default app;

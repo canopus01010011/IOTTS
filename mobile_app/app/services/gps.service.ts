@@ -19,7 +19,7 @@ export async function getLiveGpsDevices(): Promise<LiveGpsDevice[]> {
     data: LiveGpsDevice[];
   }>("/gps/live");
 
-  return response.data ?? [];
+  return response.data?.data ?? [];
 }
 
 export async function getGpsForContainer(containerId?: string | null) {

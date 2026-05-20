@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import api from './services/api'
 import Landing       from './pages/Landing'
 import Login         from './pages/Login'
@@ -11,10 +11,13 @@ import Historique    from './pages/Historique'
 import Rapports      from './pages/Rapports'
 import RapportDetail from './pages/RapportDetail'
 import Drivers       from './pages/Drivers'
+import Technicians   from './pages/Technicians'
 import Settings      from './pages/Settings'
 import CreateUser    from './pages/CreateUser'
+import Sites         from './pages/Sites'
+import Containers    from './pages/Containers'
 
-function PrivateRoute({ children }) {
+function PrivateRoute() {
   const [checking, setChecking] = useState(true)
   const [allowed, setAllowed] = useState(false)
 
@@ -58,11 +61,7 @@ function PrivateRoute({ children }) {
     )
   }
 
-  return allowed ? children : <Navigate to="/login" replace />
-}
-
-function PR({ children }) {
-  return <PrivateRoute>{children}</PrivateRoute>
+  return allowed ? <Outlet /> : <Navigate to="/login" replace />
 }
 
 export default function App() {
@@ -72,15 +71,20 @@ export default function App() {
       <Route path="/login"    element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      <Route path="/dashboard"                  element={<PR><Dashboard /></PR>} />
-      <Route path="/dashboard/missions"         element={<PR><CreateMission /></PR>} />
-      <Route path="/dashboard/suivi"            element={<PR><SuiviMissions /></PR>} />
-      <Route path="/dashboard/historique"       element={<PR><Historique /></PR>} />
-      <Route path="/dashboard/rapports"         element={<PR><Rapports /></PR>} />
-      <Route path="/dashboard/rapports/:id"     element={<PR><RapportDetail /></PR>} />
-      <Route path="/dashboard/drivers"          element={<PR><Drivers /></PR>} />
-      <Route path="/dashboard/settings"         element={<PR><Settings /></PR>} />
-      <Route path="/dashboard/create-user" element={<PR><CreateUser /></PR>} />
+      <Route element={<PrivateRoute />}>
+        <Route path="/dashboard"                  element={<Dashboard />} />
+        <Route path="/dashboard/missions"         element={<CreateMission />} />
+        <Route path="/dashboard/suivi"            element={<SuiviMissions />} />
+        <Route path="/dashboard/historique"       element={<Historique />} />
+        <Route path="/dashboard/rapports"         element={<Rapports />} />
+        <Route path="/dashboard/rapports/:id"     element={<RapportDetail />} />
+        <Route path="/dashboard/drivers"          element={<Drivers />} />
+        <Route path="/dashboard/technicians"      element={<Technicians />} />
+        <Route path="/dashboard/sites"            element={<Sites />} />
+        <Route path="/dashboard/containers"      element={<Containers />} />
+        <Route path="/dashboard/settings"         element={<Settings />} />
+        <Route path="/dashboard/create-user"      element={<CreateUser />} />
+      </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

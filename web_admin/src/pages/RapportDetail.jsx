@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../services/api'
+import { formatEquipmentItem, formatDateTime } from '../utils/missionFormat'
 import Sidebar from '../components/Sidebar'
 import TopBar  from '../components/TopBar'
 
@@ -124,9 +125,7 @@ export default function RapportDetail() {
   const allImages = [...photos, ...pictureUrls]
 
   const statutLabel = STATUS_LABEL[mission.status] || mission.status
-  const dateLabel = mission.scheduled_start_date
-    ? new Date(mission.scheduled_start_date).toLocaleDateString('fr-FR')
-    : '—'
+  const dateLabel = formatDateTime(mission.scheduled_start_date)
   const startTime = mission.start_date
     ? new Date(mission.start_date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
     : '—'
@@ -326,9 +325,7 @@ export default function RapportDetail() {
                     color: '#93c5fd',
                   }}
                 >
-                  {item.equipment_id
-                    ? `${item.equipment_id} ×${item.quantity || 1}`
-                    : String(item)}
+                  {formatEquipmentItem(item)}
                 </span>
               ))}
             </div>

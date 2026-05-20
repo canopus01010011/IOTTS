@@ -2,7 +2,7 @@ import { scanDelivery } from "@/app/services/delivery.service";
 import { useAuth } from "@/hooks/useAuth";
 import { useQRScanner } from "@/hooks/useQRScanner";
 import { PermissionResponse, useCameraPermissions } from "expo-camera";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert } from "react-native";
 
@@ -22,6 +22,7 @@ type QRPageResult = {
 export function useQRPage(): QRPageResult {
   const [permission, requestPermission] = useCameraPermissions();
   const { user } = useAuth();
+  const router = useRouter();
   const { scanned, data, scanError, handleScan, reset } = useQRScanner();
   const { missionId: routeMissionId } = useLocalSearchParams<{
     missionId?: string;
@@ -35,22 +36,55 @@ export function useQRPage(): QRPageResult {
   }, [permission, requestPermission]);
 
   const handleAction = async () => {
-    const missionId = data?.missionId || routeMissionId;
+    if (!user) {
+      Alert.alert("Error", "You must be logged in.");
+      return;
+    }
 
-    if (!missionId || !user) {
-      Alert.alert("Error", "Scan a valid mission QR code first.");
+    const payload =
+      user.role === "driver"
+        ? data?.scanType === "container"
+          ? { qrCode: data.qrCode }
+          : { missionId: data?.missionId || String(routeMissionId || "") }
+        : { missionId: data?.missionId || String(routeMissionId || "") };
+
+    if (user.role === "driver" && !payload.qrCode && !payload.missionId) {
+      Alert.alert(
+        "Entrepôt",
+        "Scannez le QR du conteneur (ex. CTR-IOT-001) pour démarrer la livraison.",
+      );
+      return;
+    }
+
+    if (user.role === "technician" && !payload.missionId) {
+      Alert.alert("Site", "Scannez le QR de la mission sur le site de livraison.");
       return;
     }
 
     try {
       setConfirming(true);
-      const result = await scanDelivery(String(missionId));
-      Alert.alert("Success", result.message);
-      reset();
+      const result = await scanDelivery(payload);
+      Alert.alert("Success", result.message, [
+        {
+          text: "Voir la carte",
+          onPress: () => {
+            reset();
+            if (result.missionId) {
+              router.push({
+                pathname: "/(Tabs)/Map",
+                params: { missionId: result.missionId },
+              });
+            } else {
+              router.push("/(Tabs)/Map");
+            }
+          },
+        },
+        { text: "OK", onPress: () => reset() },
+      ]);
     } catch (err) {
       Alert.alert(
         "Error",
-        err instanceof Error ? err.message : "Delivery confirmation failed",
+        err instanceof Error ? err.message : "Scan failed",
       );
     } finally {
       setConfirming(false);

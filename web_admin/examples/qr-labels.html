@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>QR codes — simulations IoT</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; padding: 24px; }
+    h1 { font-size: 1.25rem; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 24px; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; text-align: center; }
+    .card h2 { font-size: 1rem; color: #60a5fa; margin: 0 0 8px; }
+    .card p { font-size: 12px; color: #94a3b8; margin: 4px 0; }
+    .qr { margin: 16px auto; display: inline-block; background: #fff; padding: 8px; border-radius: 8px; }
+    .plain { font-family: monospace; font-size: 18px; color: #4ade80; margin-top: 12px; }
+    @media print { body { background: #fff; color: #000; } .card { break-inside: avoid; border-color: #ccc; } }
+  </style>
+</head>
+<body>
+  <h1>QR entrepôt — conducteur (conteneurs)</h1>
+  <p style="color:#94a3b8;font-size:14px;">Imprimez cette page. Le conducteur scanne le QR du conteneur à l&apos;entrepôt. Technicien : scanne le <strong>MIS-…</strong> affiché après création de la mission.</p>
+  <div class="grid" id="grid"></div>
+  <script>
+    const containers = [
+      { route: 'OS_Draria', qr: 'CTR-IOT-001', device: 'package_001', json: 'mission-iot-package_001.json' },
+      { route: 'OS_Meftah', qr: 'CTR-IOT-002', device: 'package_002', json: 'mission-iot-package_002.json' },
+      { route: 'OS_Cheraga', qr: 'CTR-IOT-003', device: 'package_003', json: 'mission-iot-package_003.json' },
+    ];
+    const grid = document.getElementById('grid');
+    containers.forEach((c) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <h2>${c.route}</h2>
+        <p>GPS: ${c.device}</p>
+        <p>Import: ${c.json}</p>
+        <div class="qr" id="qr-${c.qr}"></div>
+        <div class="plain">${c.qr}</div>
+      `;
+      grid.appendChild(card);
+      new QRCode(document.getElementById('qr-' + c.qr), {
+        text: c.qr,
+        width: 180,
+        height: 180,
+      });
+    });
+  </script>
+</body>
+</html>

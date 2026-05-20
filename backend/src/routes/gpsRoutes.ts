@@ -10,7 +10,11 @@ router.use(authenticate);
 // Get all equipment with live locations
 router.get('/live', GPSController.getAllLiveLocations);
 
-// Get GPS history for specific equipment
+// Live position + trail for a mission container
+router.get('/container/:containerId/live', GPSController.getContainerLive);
+router.get('/container/:containerId/history', GPSController.getContainerHistory);
+
+// Get GPS history for specific equipment (gps_id)
 router.get('/equipment/:equipmentId/history', GPSController.getEquipmentHistory);
 
 export default router;

@@ -1,4 +1,7 @@
 import { Mission, Site, User, MissionFile } from '../models/index.js';
+import { resolveMissionFromImport, buildImportTemplate } from './missionImportService.js';
+import { persistMissionEquipment } from './missionEquipmentService.js';
+import { applyMissionAssigned, notifyMissionAssigned } from './missionWorkflowService.js';
 
 const normalizeMissionPayload = (data: any) => ({
   status: data.status || 'pending',
@@ -15,21 +18,70 @@ const normalizeMissionPayload = (data: any) => ({
 
 export class MissionService {
   static async createMission(data: any) {
-    return Mission.create(normalizeMissionPayload(data));
+    const { equipment_list: rawEquipment, ...rest } = data;
+    const mission = await Mission.create(
+      normalizeMissionPayload({ ...rest, equipment_list: [] }),
+    );
+    const equipment_list = await persistMissionEquipment(
+      rawEquipment,
+      mission.id,
+      data.container_id,
+    );
+    await mission.update({ equipment_list });
+    const full = await Mission.findByPk(mission.id, { include: [{ model: Site }] });
+    if (full) {
+      await applyMissionAssigned(full);
+      await notifyMissionAssigned(full, full.Site?.name);
+    }
+    return full || mission.reload();
   }
 
   static async createMissionFromJson(data: any, adminId: string) {
-    const missionData = data.file_format || data.mission || data;
+    const fileFormat =
+      data.file_format && typeof data.file_format === 'object'
+        ? data.file_format
+        : data;
+
+    const resolved = await resolveMissionFromImport(data);
+    const reference =
+      resolved.reference ||
+      data.reference ||
+      `mission-import-${Date.now()}`;
+
+    const { equipment_list: rawEquipment, resolved_entities, ...missionFields } = resolved;
+    const mission = await Mission.create(
+      normalizeMissionPayload({ ...missionFields, equipment_list: [] }),
+    );
+    const equipment_list = await persistMissionEquipment(
+      rawEquipment,
+      mission.id,
+      missionFields.container_id,
+    );
+    await mission.update({ equipment_list });
+
     const missionFile = await MissionFile.create({
-      reference: data.reference || `mission-import-${Date.now()}`,
-      file_format: missionData,
+      reference,
+      file_format: fileFormat,
       imported_by: adminId,
+      mission_id: mission.id,
     });
 
-    const mission = await Mission.create(normalizeMissionPayload(missionData));
-    await missionFile.update({ mission_id: mission.id });
+    const full = await Mission.findByPk(mission.id, { include: [{ model: Site }] });
+    if (full) {
+      await applyMissionAssigned(full);
+      await notifyMissionAssigned(full, full.Site?.name);
+    }
 
-    return { missionFile, mission };
+    return {
+      missionFile,
+      mission: full || (await mission.reload()),
+      resolved_entities,
+      equipment_list,
+    };
+  }
+
+  static async getImportTemplate() {
+    return buildImportTemplate();
   }
 
   static async getAllMissions(query: any, userRole: string, userId: string) {
@@ -48,7 +100,7 @@ export class MissionService {
       include: [
         { model: User, as: 'technician', attributes: ['id', 'full_name', 'email', 'phone'] },
         { model: User, as: 'driver', attributes: ['id', 'full_name', 'email', 'phone'] },
-        { model: Site, attributes: ['id', 'name', 'address'] },
+        { model: Site, attributes: ['id', 'name', 'address', 'latitude', 'longitude'] },
       ],
       limit,
       offset,

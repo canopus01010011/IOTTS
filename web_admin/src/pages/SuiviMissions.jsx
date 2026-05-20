@@ -1,7 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import api from '../services/api'
 import Sidebar from '../components/Sidebar'
 import TopBar  from '../components/TopBar'
+
+const POLL_MS = 10000
 
 const statusMap = {
   pending: 'En attente',
@@ -28,13 +30,23 @@ const formatDuration = (start, end) => {
   return `${hours}h ${rest.toString().padStart(2, '0')}min`
 }
 
+const hasValidCoords = (lat, lng) => {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false
+  if (lat === 0 && lng === 0) return false
+  return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
+}
+
 const formatMission = (mission) => {
   const site = mission.Site || {}
+  const lat = Number(site.latitude)
+  const lng = Number(site.longitude)
   const startAt = mission.start_date || mission.scheduled_start_date
   return {
     id: mission.id,
     ref: mission.id,
+    containerId: mission.container_id || null,
     site: site.name || mission.site_id || 'N/A',
+    siteAddress: site.address || '',
     driver: mission.driver?.full_name || 'N/A',
     technicien: mission.technician?.full_name || 'N/A',
     depart: startAt
@@ -43,121 +55,181 @@ const formatMission = (mission) => {
     duree: formatDuration(mission.scheduled_start_date, mission.scheduled_end_date),
     statut: statusMap[mission.status] || mission.status || 'N/A',
     statusValue: mission.status,
-    lat: Number(site.latitude) || 0,
-    lng: Number(site.longitude) || 0,
-    destLat: Number(site.latitude) || 0,
-    destLng: Number(site.longitude) || 0,
+    lat,
+    lng,
+    hasCoords: hasValidCoords(lat, lng),
   }
 }
 
-function MapModal({ mission, onClose }) {
+function pickLiveForContainer(liveDevices, containerId) {
+  if (!containerId) return null
+  const row = liveDevices.find((d) => d.container_id === containerId)
+  if (!row) return null
+  const pt = row.TrackingData?.[0]
+  if (!pt) return { ...row, latitude: null, longitude: null }
+  return {
+    ...row,
+    latitude: Number(pt.latitude),
+    longitude: Number(pt.longitude),
+    timestamp: pt.timestamp,
+  }
+}
+
+function MapModal({ mission, liveGps, trackPoints, onClose }) {
   const mapRef = useRef(null)
   const mapObj = useRef(null)
-  const [elapsed, setElapsed] = useState(0)
+  const layersRef = useRef(null)
 
-  useEffect(() => {
-    const t = setInterval(() => setElapsed(e => e + 1), 1000)
-    return () => clearInterval(t)
-  }, [])
+  const containerLat = liveGps?.latitude
+  const containerLng = liveGps?.longitude
+  const hasContainer =
+    containerLat != null &&
+    containerLng != null &&
+    hasValidCoords(containerLat, containerLng)
 
   useEffect(() => {
     if (!window.L || !mapRef.current) return
     const L = window.L
-    const map = L.map(mapRef.current, { zoomControl:true, attributionControl:false })
-      .setView([mission.lat, mission.lng], 14)
-    mapObj.current = map
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(map)
+    const centerLat = hasContainer ? containerLat : mission.lat
+    const centerLng = hasContainer ? containerLng : mission.lng
+    if (!hasValidCoords(centerLat, centerLng)) return
+
+    const map = L.map(mapRef.current, { zoomControl: true, attributionControl: false })
+      .setView([centerLat, centerLng], 13)
+    mapObj.current = map
+    layersRef.current = L.layerGroup().addTo(map)
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map)
+
+    const siteIcon = L.divIcon({
+      className: '',
+      html: `<div style="width:42px;height:42px;background:#0f6e56;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #4ade80;font-size:22px;">📍</div>`,
+      iconSize: [42, 42],
+      iconAnchor: [21, 42],
+    })
 
     const truckIcon = L.divIcon({
-      className:'',
-      html:`<div style="width:44px;height:44px;background:#1d4ed8;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #60a5fa;font-size:22px;box-shadow:0 0 0 6px rgba(59,130,246,.2);">🚛</div>`,
-      iconSize:[44,44], iconAnchor:[22,22],
-    })
-    const siteIcon = L.divIcon({
-      className:'',
-      html:`<div style="width:38px;height:38px;background:#0f6e56;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #4ade80;font-size:20px;">📡</div>`,
-      iconSize:[38,38], iconAnchor:[19,19],
-    })
-    const departIcon = L.divIcon({
-      className:'',
-      html:`<div style="width:30px;height:30px;background:#854f0b;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fbbf24;font-size:16px;">🏭</div>`,
-      iconSize:[30,30], iconAnchor:[15,15],
+      className: '',
+      html: `<div style="width:44px;height:44px;background:#1d4ed8;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #60a5fa;font-size:22px;box-shadow:0 0 0 6px rgba(59,130,246,.25);">🚛</div>`,
+      iconSize: [44, 44],
+      iconAnchor: [22, 22],
     })
 
-    L.marker([mission.lat, mission.lng], { icon: truckIcon })
-      .addTo(map).bindPopup(`<b>${mission.driver}</b><br/>Position actuelle`)
+    const bounds = []
 
-    L.marker([mission.destLat, mission.destLng], { icon: siteIcon })
-      .addTo(map).bindPopup(`<b>${mission.site}</b><br/>Destination`)
-
-    if (mission.statut === 'En cours') {
-      const dLat = mission.destLat - 0.05
-      const dLng = mission.destLng - 0.05
-      L.marker([dLat, dLng], { icon: departIcon })
-        .addTo(map).bindPopup('Point de départ')
-      L.polyline([[dLat, dLng],[mission.lat, mission.lng],[mission.destLat, mission.destLng]], {
-        color:'#3b82f6', weight:3, dashArray:'8 6', opacity:.8
-      }).addTo(map)
-      map.fitBounds([[dLat,dLng],[mission.destLat,mission.destLng]], { padding:[60,60] })
-    } else {
-      map.setView([mission.lat, mission.lng], 15)
+    if (mission.hasCoords) {
+      L.marker([mission.lat, mission.lng], { icon: siteIcon })
+        .addTo(layersRef.current)
+        .bindPopup(`<b>Site : ${mission.site}</b><br/>${mission.siteAddress || ''}`)
+      bounds.push([mission.lat, mission.lng])
     }
 
-    return () => { if (mapObj.current) { mapObj.current.remove(); mapObj.current = null } }
-  }, [mission.id])
+    if (hasContainer) {
+      L.marker([containerLat, containerLng], { icon: truckIcon })
+        .addTo(layersRef.current)
+        .bindPopup(
+          `<b>Conteneur (simulation IoT)</b><br/>${liveGps.device_serial_number}<br/>Batterie : ${liveGps.battery_level ?? '—'}%`,
+        )
+      bounds.push([containerLat, containerLng])
+    }
 
-  const fmt = (s) => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`
+    if (trackPoints.length >= 2) {
+      const latlngs = trackPoints.map((p) => [Number(p.latitude), Number(p.longitude)])
+      L.polyline(latlngs, { color: '#3b82f6', weight: 3, opacity: 0.75 }).addTo(layersRef.current)
+      latlngs.forEach((ll) => bounds.push(ll))
+    } else if (hasContainer && mission.hasCoords) {
+      L.polyline(
+        [[containerLat, containerLng], [mission.lat, mission.lng]],
+        { color: '#3b82f6', weight: 2, dashArray: '6 8', opacity: 0.6 },
+      ).addTo(layersRef.current)
+    }
+
+    if (bounds.length > 1) {
+      map.fitBounds(bounds, { padding: [48, 48] })
+    }
+
+    return () => {
+      if (mapObj.current) {
+        mapObj.current.remove()
+        mapObj.current = null
+        layersRef.current = null
+      }
+    }
+  }, [
+    mission.id,
+    mission.lat,
+    mission.lng,
+    mission.hasCoords,
+    containerLat,
+    containerLng,
+    hasContainer,
+    liveGps?.battery_level,
+    liveGps?.device_serial_number,
+    trackPoints.length,
+  ])
 
   return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.8)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000, padding:16 }}
-      onClick={onClose}>
-      <div style={{ width:'100%', maxWidth:960, background:'#111827', border:'0.5px solid rgba(59,130,246,.3)', borderRadius:14, overflow:'hidden' }}
-        onClick={e => e.stopPropagation()}>
-
-        {/* Header */}
+    <div
+      style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.8)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000, padding:16 }}
+      onClick={onClose}
+    >
+      <div
+        style={{ width:'100%', maxWidth:960, background:'#111827', border:'0.5px solid rgba(59,130,246,.3)', borderRadius:14, overflow:'hidden' }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 18px', background:'#080d1a', borderBottom:'0.5px solid rgba(59,130,246,.15)' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
             <span style={{ fontSize:14, fontWeight:500, color:'#60a5fa' }}>{mission.ref}</span>
             <span style={{ fontSize:13, color:'#e2e8f0', fontWeight:500 }}>{mission.site}</span>
             <span style={{ padding:'3px 10px', borderRadius:20, fontSize:11, fontWeight:500, background:STATUS[mission.statut]?.bg, color:STATUS[mission.statut]?.color }}>
               {mission.statut}
             </span>
-          </div>
-          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-            {mission.statut === 'En cours' && (
-              <div style={{ display:'flex', alignItems:'center', gap:5 }}>
-                <span style={{ width:7, height:7, borderRadius:'50%', background:'#4ade80', display:'inline-block', animation:'pulse 1.5s infinite' }}></span>
-                <span style={{ fontSize:11, color:'#4ade80' }}>Live • {fmt(elapsed)}</span>
-              </div>
+            {hasContainer && (
+              <span style={{ fontSize:11, color:'#4ade80' }}>● Live IoT</span>
             )}
-            <button onClick={onClose}
-              style={{ background:'rgba(239,68,68,.1)', border:'0.5px solid rgba(239,68,68,.2)', color:'#f87171', borderRadius:6, padding:'5px 14px', fontSize:12, cursor:'pointer' }}>
-              ✕ Fermer
-            </button>
           </div>
+          <button
+            onClick={onClose}
+            style={{ background:'rgba(239,68,68,.1)', border:'0.5px solid rgba(239,68,68,.2)', color:'#f87171', borderRadius:6, padding:'5px 14px', fontSize:12, cursor:'pointer' }}
+          >
+            ✕ Fermer
+          </button>
         </div>
 
-        {/* Carte */}
-        <div ref={mapRef} style={{ width:'100%', height:440 }} />
+        {mission.hasCoords || hasContainer ? (
+          <div ref={mapRef} style={{ width:'100%', height:440 }} />
+        ) : (
+          <div style={{ padding: 48, textAlign: 'center' }}>
+            <p style={{ fontSize: 14, color: '#fbbf24' }}>Aucune position disponible</p>
+            <p style={{ fontSize: 12, color: 'rgba(148,163,184,.6)', marginTop: 8 }}>
+              Assignez un conteneur avec GPS (package_001…) et lancez le simulateur IoT.
+            </p>
+          </div>
+        )}
 
-        {/* Footer infos */}
         <div style={{ padding:'12px 18px', background:'#0d1426', borderTop:'0.5px solid rgba(59,130,246,.1)', display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14 }}>
           <div>
-            <p style={{ fontSize:10, color:'rgba(148,163,184,.4)', marginBottom:3 }}>Driver</p>
-            <p style={{ fontSize:13, color:'#e2e8f0', fontWeight:500 }}>🚛 {mission.driver}</p>
+            <p style={{ fontSize:10, color:'rgba(148,163,184,.4)', marginBottom:3 }}>Conducteur</p>
+            <p style={{ fontSize:13, color:'#e2e8f0' }}>🚛 {mission.driver}</p>
           </div>
           <div>
-            <p style={{ fontSize:10, color:'rgba(148,163,184,.4)', marginBottom:3 }}>Heure départ</p>
-            <p style={{ fontSize:13, color:'#e2e8f0', fontWeight:500 }}>⏰ {mission.depart}</p>
+            <p style={{ fontSize:10, color:'rgba(148,163,184,.4)', marginBottom:3 }}>GPS conteneur</p>
+            <p style={{ fontSize:12, color:'#60a5fa' }}>
+              {hasContainer
+                ? `${containerLat.toFixed(5)}, ${containerLng.toFixed(5)}`
+                : mission.containerId
+                  ? 'En attente de données…'
+                  : 'Pas de conteneur'}
+            </p>
           </div>
           <div>
-            <p style={{ fontSize:10, color:'rgba(148,163,184,.4)', marginBottom:3 }}>Durée</p>
-            <p style={{ fontSize:13, color:'#e2e8f0', fontWeight:500 }}>⏱ {mission.duree}</p>
+            <p style={{ fontSize:10, color:'rgba(148,163,184,.4)', marginBottom:3 }}>Device IoT</p>
+            <p style={{ fontSize:12, color:'#cbd5e1' }}>{liveGps?.device_serial_number || '—'}</p>
           </div>
           <div>
-            <p style={{ fontSize:10, color:'rgba(148,163,184,.4)', marginBottom:3 }}>Position GPS</p>
-            <p style={{ fontSize:12, color:'#60a5fa' }}>📍 {mission.lat.toFixed(4)}, {mission.lng.toFixed(4)}</p>
+            <p style={{ fontSize:10, color:'rgba(148,163,184,.4)', marginBottom:3 }}>Batterie</p>
+            <p style={{ fontSize:12, color:'#cbd5e1' }}>{liveGps?.battery_level != null ? `${liveGps.battery_level}%` : '—'}</p>
           </div>
         </div>
       </div>
@@ -166,39 +238,80 @@ function MapModal({ mission, onClose }) {
 }
 
 export default function SuiviMissions() {
-  const [missions,  setMissions]  = useState([])
-  const [selected,  setSelected]  = useState(null)
-  const [filtre,    setFiltre]    = useState('Tous')
-  const [leaflet,   setLeaflet]   = useState(false)
+  const [missions, setMissions] = useState([])
+  const [liveDevices, setLiveDevices] = useState([])
+  const [selected, setSelected] = useState(null)
+  const [trackPoints, setTrackPoints] = useState([])
+  const [filtre, setFiltre] = useState('Tous')
+  const [leaflet, setLeaflet] = useState(false)
+  const [loadError, setLoadError] = useState('')
+
+  const loadLiveGps = useCallback(async () => {
+    try {
+      const res = await api.get('/gps/live')
+      setLiveDevices(res.data?.data || [])
+    } catch {
+      setLiveDevices([])
+    }
+  }, [])
 
   useEffect(() => {
     if (!document.getElementById('leaflet-css')) {
       const l = document.createElement('link')
-      l.id='leaflet-css'; l.rel='stylesheet'
-      l.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+      l.id = 'leaflet-css'
+      l.rel = 'stylesheet'
+      l.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
       document.head.appendChild(l)
     }
     if (!window.L) {
       const s = document.createElement('script')
-      s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+      s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
       s.onload = () => setLeaflet(true)
       document.head.appendChild(s)
     } else setLeaflet(true)
   }, [])
 
   useEffect(() => {
-    api.get('/missions')
+    setLoadError('')
+    api.get('/missions', { params: { limit: 100 } })
       .then((r) => setMissions((r.data.missions || []).map(formatMission)))
-      .catch(() => setMissions([]))
+      .catch((err) => {
+        setMissions([])
+        setLoadError(err.response?.data?.error || err.message || 'Erreur de chargement')
+      })
   }, [])
 
-  const filtres  = ['Tous','En attente','En cours','Terminé']
-  const displayed = filtre === 'Tous' ? missions : missions.filter(m => m.statut === filtre)
+  useEffect(() => {
+    loadLiveGps()
+    const id = setInterval(loadLiveGps, POLL_MS)
+    return () => clearInterval(id)
+  }, [loadLiveGps])
+
+  const openMap = async (m) => {
+    if (!leaflet) return
+    setSelected(m)
+    setTrackPoints([])
+    if (m.containerId) {
+      try {
+        const res = await api.get(`/gps/container/${m.containerId}/history`, { params: { limit: 200 } })
+        setTrackPoints(res.data?.data || [])
+      } catch {
+        setTrackPoints([])
+      }
+    }
+  }
+
+  const selectedLive = selected
+    ? pickLiveForContainer(liveDevices, selected.containerId)
+    : null
+
+  const filtres = ['Tous', 'En attente', 'En cours', 'Terminé']
+  const displayed = filtre === 'Tous' ? missions : missions.filter((m) => m.statut === filtre)
 
   const stats = {
-    enCours:  missions.filter(m => m.statut === 'En cours').length,
-    enAttente: missions.filter(m => m.statut === 'En attente').length,
-    termines: missions.filter(m => m.statut === 'Terminé').length,
+    enCours: missions.filter((m) => m.statut === 'En cours').length,
+    enAttente: missions.filter((m) => m.statut === 'En attente').length,
+    termines: missions.filter((m) => m.statut === 'Terminé').length,
   }
 
   return (
@@ -208,13 +321,22 @@ export default function SuiviMissions() {
         <TopBar title="Suivi des missions" />
         <main className="flex-1 p-6">
 
-          {/* Stats */}
+          {loadError && (
+            <div className="mb-4 px-4 py-3 rounded-lg text-sm" style={{ background:'rgba(239,68,68,.1)', color:'#f87171' }}>
+              {loadError}
+            </div>
+          )}
+
+          <p className="text-xs mb-4" style={{ color: 'rgba(148,163,184,.5)' }}>
+            Suivi livraison IoT : positions du simulateur (<code style={{ color: '#93c5fd' }}>iot_system</code>) rafraîchies toutes les {POLL_MS / 1000}s.
+          </p>
+
           <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:20 }}>
             {[
-              { label:'En cours',   value:stats.enCours,   color:'#60a5fa' },
+              { label:'En cours', value:stats.enCours, color:'#60a5fa' },
               { label:'En attente', value:stats.enAttente, color:'#fbbf24' },
-              { label:'Terminées',  value:stats.termines,  color:'#4ade80' },
-            ].map(s => (
+              { label:'Terminées', value:stats.termines, color:'#4ade80' },
+            ].map((s) => (
               <div key={s.label} style={{ background:'#111827', border:'0.5px solid rgba(59,130,246,.15)', borderRadius:12, padding:'14px 18px' }}>
                 <p style={{ fontSize:26, fontWeight:500, color:s.color }}>{s.value}</p>
                 <p style={{ fontSize:12, color:'rgba(148,163,184,.5)', marginTop:4 }}>{s.label}</p>
@@ -222,69 +344,75 @@ export default function SuiviMissions() {
             ))}
           </div>
 
-          {/* Filtres */}
           <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:20 }}>
-            {filtres.map(f => (
+            {filtres.map((f) => (
               <button key={f} onClick={() => setFiltre(f)}
-                style={filtre===f
+                style={filtre === f
                   ? { background:'rgba(59,130,246,.18)', border:'0.5px solid #3b82f6', color:'#60a5fa', padding:'5px 14px', borderRadius:20, fontSize:12, cursor:'pointer' }
-                  : { background:'rgba(59,130,246,.06)', border:'0.5px solid rgba(59,130,246,.15)', color:'rgba(148,163,184,.6)', padding:'5px 14px', borderRadius:20, fontSize:12, cursor:'pointer' }
-                }>
+                  : { background:'rgba(59,130,246,.06)', border:'0.5px solid rgba(59,130,246,.15)', color:'rgba(148,163,184,.6)', padding:'5px 14px', borderRadius:20, fontSize:12, cursor:'pointer' }}
+              >
                 {f}
               </button>
             ))}
           </div>
 
-          {/* Grille missions */}
           <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14 }}>
-            {displayed.map(m => (
-              <div key={m.id}
-                onClick={() => leaflet && setSelected(m)}
-                style={{
-                  background:'#111827', border:'0.5px solid rgba(59,130,246,.15)',
-                  borderRadius:12, padding:16, cursor:'pointer', transition:'all .15s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor='#3b82f6'; e.currentTarget.style.background='rgba(59,130,246,.06)' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(59,130,246,.15)'; e.currentTarget.style.background='#111827' }}
-              >
-                {/* Header */}
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
-                  <span style={{ fontSize:13, fontWeight:500, color:'#60a5fa' }}>{m.ref}</span>
-                  <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 9px', borderRadius:20, fontSize:10, fontWeight:500, background:STATUS[m.statut]?.bg, color:STATUS[m.statut]?.color }}>
-                    <span style={{ width:5, height:5, borderRadius:'50%', background:STATUS[m.statut]?.dot }}></span>
-                    {m.statut}
-                  </span>
-                </div>
+            {displayed.map((m) => {
+              const live = pickLiveForContainer(liveDevices, m.containerId)
+              const hasLive =
+                live?.latitude != null &&
+                live?.longitude != null &&
+                hasValidCoords(live.latitude, live.longitude)
 
-                {/* Site */}
-                <p style={{ fontSize:14, fontWeight:500, color:'#e2e8f0', marginBottom:6 }}>{m.site}</p>
-
-                {/* Infos */}
-                <div style={{ display:'flex', flexDirection:'column', gap:4, marginBottom:12 }}>
-                  <p style={{ fontSize:11, color:'rgba(148,163,184,.55)' }}>🚛 {m.driver}</p>
-                  <p style={{ fontSize:11, color:'rgba(148,163,184,.55)' }}>🔧 {m.technicien}</p>
-                  <p style={{ fontSize:11, color:'rgba(148,163,184,.45)' }}>⏰ Départ {m.depart} · ⏱ {m.duree}</p>
-                </div>
-
-                {/* GPS si en route */}
-                {(m.statut === 'En cours' || m.statut === 'En attente') && m.lat && m.lng && (
-                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'7px 10px', background:'rgba(59,130,246,.06)', border:'0.5px solid rgba(59,130,246,.12)', borderRadius:7 }}>
-                    <p style={{ fontSize:10, color:'rgba(59,130,246,.7)' }}>📍 {m.lat.toFixed(4)}, {m.lng.toFixed(4)}</p>
-                    <p style={{ fontSize:10, color:'#60a5fa' }}>Voir carte →</p>
+              return (
+                <div
+                  key={m.id}
+                  onClick={() => openMap(m)}
+                  style={{
+                    background:'#111827', border:'0.5px solid rgba(59,130,246,.15)',
+                    borderRadius:12, padding:16, cursor: leaflet ? 'pointer' : 'default',
+                  }}
+                >
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+                    <span style={{ fontSize:13, fontWeight:500, color:'#60a5fa' }}>{m.ref}</span>
+                    <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 9px', borderRadius:20, fontSize:10, fontWeight:500, background:STATUS[m.statut]?.bg, color:STATUS[m.statut]?.color }}>
+                      {m.statut}
+                    </span>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  <p style={{ fontSize:14, fontWeight:500, color:'#e2e8f0', marginBottom:6 }}>{m.site}</p>
+
+                  <div style={{ display:'flex', flexDirection:'column', gap:4, marginBottom:12 }}>
+                    <p style={{ fontSize:11, color:'rgba(148,163,184,.55)' }}>🚛 {m.driver}</p>
+                    <p style={{ fontSize:11, color:'rgba(148,163,184,.55)' }}>🔧 {m.technicien}</p>
+                  </div>
+
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'7px 10px', background:'rgba(59,130,246,.06)', border:'0.5px solid rgba(59,130,246,.12)', borderRadius:7 }}>
+                    {hasLive ? (
+                      <p style={{ fontSize:10, color:'#4ade80' }}>📡 Live : {live.latitude.toFixed(4)}, {live.longitude.toFixed(4)}</p>
+                    ) : m.containerId ? (
+                      <p style={{ fontSize:10, color:'rgba(234,179,8,.8)' }}>⏳ GPS en attente (IoT)</p>
+                    ) : (
+                      <p style={{ fontSize:10, color:'rgba(148,163,184,.5)' }}>Site : {m.hasCoords ? `${m.lat.toFixed(4)}, ${m.lng.toFixed(4)}` : '—'}</p>
+                    )}
+                    <p style={{ fontSize:10, color:'#60a5fa' }}>Carte →</p>
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
         </main>
       </div>
 
       {selected && leaflet && (
-        <MapModal mission={selected} onClose={() => setSelected(null)} />
+        <MapModal
+          mission={selected}
+          liveGps={selectedLive}
+          trackPoints={trackPoints}
+          onClose={() => { setSelected(null); setTrackPoints([]) }}
+        />
       )}
-
-      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
     </div>
   )
 }

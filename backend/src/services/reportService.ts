@@ -79,7 +79,10 @@ export class ReportService {
         mission.status,
         (mission as any).technician?.full_name || 'N/A',
         (mission as any).driver?.full_name || 'N/A',
-        (mission as any).equipment_list?.map((e: any) => `${e.equipment_id} (x${e.quantity})`).join(', ') || 'None',
+        (mission as any).equipment_list?.map((e: any) => {
+          const name = e.label || e.name || e.type || e.equipment_id;
+          return `${name} (x${e.quantity})`;
+        }).join(', ') || 'None',
         mission.scheduled_start_date?.toISOString().split('T')[0] || 'N/A',
         mission.start_date?.toISOString().split('T')[0] || 'N/A',
         mission.end_date?.toISOString().split('T')[0] || 'Pending',

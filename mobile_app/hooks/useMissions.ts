@@ -40,7 +40,12 @@ export function useMissions() {
     [missions],
   );
 
-  const activeMission = activeMissions.length > 0 ? activeMissions[0] : null;
+  const activeMission = useMemo(() => {
+    const inProgress = activeMissions.find((m) => m.statusRaw === "in-progress");
+    if (inProgress) return inProgress;
+    const pending = activeMissions.find((m) => m.statusRaw === "pending");
+    return pending ?? (activeMissions.length > 0 ? activeMissions[0] : null);
+  }, [activeMissions]);
 
   return {
     missions,

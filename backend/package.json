@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "echo 'no build needed'",
-    "start": "tsx src/server.ts"
+    "start": "tsx src/server.ts",
+    "seed:iot": "tsx src/scripts/seedIotDevices.ts"
   },
   "keywords": [],
   "author": "",

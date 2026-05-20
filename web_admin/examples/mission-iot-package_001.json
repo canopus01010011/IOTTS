@@ -1,0 +1,34 @@
+{
+  "reference": "MSN-IOT-PKG001-DRARIA",
+  "status": "pending",
+  "scheduled_start_date": "2026-05-21T08:00:00.000Z",
+  "scheduled_end_date": "2026-05-21T20:00:00.000Z",
+  "driver_id": "PASTE_DRIVER_ID_FROM_ADMIN",
+  "technician_id": "PASTE_TECHNICIAN_ID_FROM_ADMIN",
+  "site": {
+    "name": "Livraison Draria — Fin de parcours GPX",
+    "address": "Draria, Alger (destination route OS_Draria)",
+    "latitude": 36.720143,
+    "longitude": 2.994913
+  },
+  "equipment_list": [
+    {
+      "type": "Équipement télécom",
+      "label": "Équipement télécom",
+      "serial_number": "SN-IOT-PKG001-001",
+      "model": "EQ-DRARIA-01",
+      "quantity": 1,
+      "equipment_status": "in_use"
+    }
+  ],
+  "container": {
+    "qr_code": "CTR-IOT-001",
+    "capacity": 120,
+    "status": "available",
+    "gps_device": {
+      "device_serial_number": "package_001",
+      "battery_level": 100,
+      "device_status": "active"
+    }
+  }
+}

@@ -14,10 +14,12 @@ interface UserAttributes {
   role: 'admin' | 'technician' | 'driver';
   phone: string;
   fcm_token?: string;
+  performance_score?: number;
+  missions_completed?: number;
   created_at?: Date;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'created_at' | 'first_name' | 'second_name' | 'fcm_token'> {}
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'created_at' | 'first_name' | 'second_name' | 'fcm_token' | 'performance_score' | 'missions_completed'> {}
 
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   public id!: string;
@@ -29,6 +31,8 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public role!: 'admin' | 'technician' | 'driver';
   public phone!: string;
   public fcm_token?: string;
+  public performance_score!: number;
+  public missions_completed!: number;
   public created_at!: Date;
 
   public async comparePassword(candidatePassword: string): Promise<boolean> {
@@ -81,7 +85,17 @@ User.init({
   fcm_token: {
     type: DataTypes.STRING,
     allowNull: true
-  }
+  },
+  performance_score: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
+  missions_completed: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
 }, {
   sequelize,
   tableName: 'users',

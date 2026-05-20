@@ -30,7 +30,7 @@ export class UserService {
       attributes: { exclude: ['password_hash'] },
       limit,
       offset,
-      order: [['joining_date', 'DESC']],
+      order: [['created_at', 'DESC']],
     });
     return {
       users: rows,
@@ -52,7 +52,8 @@ export class UserService {
     const user = await User.findByPk(id);
     if (!user) throw new Error('User not found');
     if (data.password) {
-      data.password_hash = await bcrypt.hash(data.password, 10);
+      // Plain password — User model beforeUpdate hook hashes password_hash
+      data.password_hash = data.password;
       delete data.password;
     }
     await user.update(data);

@@ -1,0 +1,92 @@
+{
+  "description": "QR payloads for the three IoT GPX simulators. Print or display these values; the driver app accepts plain text or JSON.",
+  "warehouse": {
+    "name": "Entrepôt — Départ simulation",
+    "note": "All routes start near Oued Semmar (run npm run seed:iot for warehouse site)",
+    "latitude": 36.706559,
+    "longitude": 3.16704
+  },
+  "simulations": [
+    {
+      "route": "OS_Draria",
+      "gpx_file": "iot_system/OS_Draria.gpx",
+      "mission_json": "web_admin/examples/mission-iot-package_001.json",
+      "container_qr_code": "CTR-IOT-001",
+      "gps_device_serial": "package_001",
+      "mqtt_topic": "ericsson/sites/site_alger/package_001/gps",
+      "driver_scan_warehouse": {
+        "plain": "CTR-IOT-001",
+        "json": {
+          "type": "container",
+          "qrCode": "CTR-IOT-001"
+        }
+      },
+      "technician_scan_site": {
+        "note": "After mission is created, scan the mission ID printed in admin or mission details",
+        "example_plain": "MIS-XXXXXXXX",
+        "json": {
+          "missionId": "MIS-XXXXXXXX",
+          "scanType": "delivery"
+        }
+      },
+      "delivery_site": {
+        "latitude": 36.720143,
+        "longitude": 2.994913
+      }
+    },
+    {
+      "route": "OS_Meftah",
+      "gpx_file": "iot_system/OS_Meftah.gpx",
+      "mission_json": "web_admin/examples/mission-iot-package_002.json",
+      "container_qr_code": "CTR-IOT-002",
+      "gps_device_serial": "package_002",
+      "mqtt_topic": "ericsson/sites/site_alger/package_002/gps",
+      "driver_scan_warehouse": {
+        "plain": "CTR-IOT-002",
+        "json": {
+          "type": "container",
+          "qrCode": "CTR-IOT-002"
+        }
+      },
+      "technician_scan_site": {
+        "note": "Scan mission ID after import",
+        "example_plain": "MIS-XXXXXXXX",
+        "json": {
+          "missionId": "MIS-XXXXXXXX",
+          "scanType": "delivery"
+        }
+      },
+      "delivery_site": {
+        "latitude": 36.62046,
+        "longitude": 3.222544
+      }
+    },
+    {
+      "route": "OS_Cheraga",
+      "gpx_file": "iot_system/OS_Cheraga.gpx",
+      "mission_json": "web_admin/examples/mission-iot-package_003.json",
+      "container_qr_code": "CTR-IOT-003",
+      "gps_device_serial": "package_003",
+      "mqtt_topic": "ericsson/sites/site_alger/package_003/gps",
+      "driver_scan_warehouse": {
+        "plain": "CTR-IOT-003",
+        "json": {
+          "type": "container",
+          "qrCode": "CTR-IOT-003"
+        }
+      },
+      "technician_scan_site": {
+        "note": "Scan mission ID after import",
+        "example_plain": "MIS-XXXXXXXX",
+        "json": {
+          "missionId": "MIS-XXXXXXXX",
+          "scanType": "delivery"
+        }
+      },
+      "delivery_site": {
+        "latitude": 36.759147,
+        "longitude": 2.963507
+      }
+    }
+  ]
+}

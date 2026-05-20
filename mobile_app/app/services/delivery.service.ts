@@ -3,6 +3,11 @@ import api from "./api";
 export type DeliveryStatus = {
   missionId: string;
   status: string;
+  container?: {
+    id: string;
+    qr_code: string;
+    status: string;
+  } | null;
   confirmation: {
     driver: { confirmed: boolean; timestamp?: string };
     technician: { confirmed: boolean; timestamp?: string };
@@ -21,14 +26,19 @@ export type DeliveryStatus = {
   } | null;
 };
 
-export async function scanDelivery(missionId: string) {
+export async function scanDelivery(payload: {
+  missionId?: string;
+  qrCode?: string;
+}) {
   return api.post<{
     success: boolean;
     message: string;
+    missionId?: string;
     status?: string;
     nextStep?: string;
+    phase?: string;
     completedAt?: string;
-  }>("/deliveries/scan", { missionId });
+  }>("/deliveries/scan", payload);
 }
 
 export async function getDeliveryStatus(missionId: string) {
