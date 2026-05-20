@@ -27,6 +27,16 @@ export const register = async (req: Request, res: Response) => {
       return res.status(409).json({ error: 'User already exists' });
     }
 
+    const requestedRole = role || 'technician';
+    if (requestedRole === 'admin') {
+      const adminCount = await User.count({ where: { role: 'admin' } });
+      if (adminCount >= 1) {
+        return res.status(409).json({
+          error: 'An administrator account already exists. Only one admin is allowed.',
+        });
+      }
+    }
+
     // 3. Hash password (your model already does this via hook, but we can double-check)
     // The model's beforeCreate hook will hash it automatically
     
@@ -72,6 +82,8 @@ export const register = async (req: Request, res: Response) => {
 
 // ============ LOGIN ============
 export const login = async (req: Request, res: Response) => {
+      console.log("LOGIN BODY RECEIVED:", req.body);
+
   try {
     const { email, password } = req.body;
 

@@ -4,9 +4,8 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  Pressable,
+  ActivityIndicator,
 } from "react-native";
-import { useRouter } from "expo-router";
 import { colors } from "@/constants/theme";
 import {
   Bell,
@@ -14,60 +13,51 @@ import {
   AlertTriangle,
   Truck,
 } from "lucide-react-native";
+import { useNotifications } from "@/hooks/useNotifications";
+
+function formatRelativeTime(dateStr: string) {
+  const date = new Date(dateStr);
+  const diffMs = Date.now() - date.getTime();
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days > 1 ? "s" : ""} ago`;
+}
+
+function getIcon(title: string) {
+  const lower = title.toLowerCase();
+  if (lower.includes("mission")) {
+    return <Bell color="#3b82f6" size={20} />;
+  }
+  if (lower.includes("driver") || lower.includes("delivery")) {
+    return <Truck color="#f59e0b" size={20} />;
+  }
+  if (lower.includes("complete")) {
+    return <CheckCircle2 color="#22c55e" size={20} />;
+  }
+  return <AlertTriangle color="gray" size={20} />;
+}
 
 export default function NotificationsScreen() {
-  const router = useRouter();
+  const { notifications, loading } = useNotifications();
 
-  const notifications = [
-    {
-      id: "1",
-      type: "mission",
-      title: "New Mission Assigned",
-      message: "You have a new mission in Blida Telecom Tower",
-      time: "5 min ago",
-      read: false,
-    },
-    {
-      id: "2",
-      type: "delivery",
-      title: "Driver Arrived",
-      message: "Driver has reached the destination",
-      time: "20 min ago",
-      read: false,
-    },
-    {
-      id: "3",
-      type: "success",
-      title: "Mission Completed",
-      message: "Boufarik Node mission marked as completed",
-      time: "1 hour ago",
-      read: true,
-    },
-  ];
-
-  const getIcon = (type: string) => {
-    switch (type) {
-      case "mission":
-        return <Bell color="#3b82f6" size={20} />;
-      case "delivery":
-        return <Truck color="#f59e0b" size={20} />;
-      case "success":
-        return <CheckCircle2 color="#22c55e" size={20} />;
-      default:
-        return <AlertTriangle color="gray" size={20} />;
-    }
-  };
-
-  const renderItem = ({ item }) => (
-    <Pressable style={[styles.card, !item.read && styles.unread]}>
-      <View style={styles.icon}>{getIcon(item.type)}</View>
+  const renderItem = ({
+    item,
+  }: {
+    item: { id: string; title: string; body: string; sent_at: string };
+  }) => (
+    <View style={styles.card}>
+      <View style={styles.icon}>{getIcon(item.title)}</View>
 
       <View style={{ flex: 1 }}>
         <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.message}>{item.message}</Text>
-        <Text style={styles.time}>{item.time}</Text>
+        <Text style={styles.message}>{item.body}</Text>
+        <Text style={styles.time}>{formatRelativeTime(item.sent_at)}</Text>
       </View>
-    </Pressable>
+    </View>
   );
 
   return (
@@ -76,23 +66,35 @@ export default function NotificationsScreen() {
         <Text style={styles.headerTitle}>Notifications</Text>
       </View>
 
-      <FlatList
-        data={notifications}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={{ padding: 20 }}
-      />
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={notifications}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={{ padding: 20 }}
+          ListEmptyComponent={
+            <Text style={styles.empty}>No notifications yet.</Text>
+          }
+        />
+      )}
     </View>
   );
 }
 
-//
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
   },
-
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   header: {
     paddingTop: 50,
     paddingBottom: 16,
@@ -100,13 +102,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#1f2937",
   },
-
   headerTitle: {
     color: "white",
     fontSize: 18,
     fontWeight: "700",
   },
-
   card: {
     flexDirection: "row",
     gap: 12,
@@ -117,11 +117,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#1f2937",
   },
-
-  unread: {
-    borderColor: "#3b82f6",
-  },
-
   icon: {
     width: 40,
     height: 40,
@@ -130,21 +125,23 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
   title: {
     color: "white",
     fontWeight: "700",
   },
-
   message: {
     color: "#9ca3af",
     fontSize: 12,
     marginTop: 2,
   },
-
   time: {
     color: "#6b7280",
     fontSize: 11,
     marginTop: 4,
+  },
+  empty: {
+    color: "#9ca3af",
+    textAlign: "center",
+    marginTop: 40,
   },
 });

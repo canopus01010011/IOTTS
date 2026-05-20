@@ -1,5 +1,5 @@
-import { useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,14 +9,17 @@ import {
   Image,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { colors } from "@/constants/theme";
 import { Camera, Send, Trash2 } from "lucide-react-native";
 import { useAuth } from "@/hooks/useAuth";
 import { useReport } from "@/hooks/useReport";
+import api from "@/app/services/api";
 
 export default function CreateReport() {
+  const router = useRouter();
   const { user } = useAuth();
   const { sendReport } = useReport();
 
@@ -25,12 +28,59 @@ export default function CreateReport() {
   const [reportText, setReportText] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [alreadySubmitted, setAlreadySubmitted] = useState(false);
+
+  useEffect(() => {
+    if (!missionId) {
+      setChecking(false);
+      return;
+    }
+
+    api
+      .get<{ success: boolean; submitted: boolean }>(
+        `/reports/submitted/${missionId}`,
+      )
+      .then((res) => setAlreadySubmitted(!!res.submitted))
+      .catch(() => setAlreadySubmitted(false))
+      .finally(() => setChecking(false));
+  }, [missionId]);
 
   if (user?.role !== "technician") {
     return (
       <View style={styles.center}>
         <Text style={styles.error}>Access Denied</Text>
         <Text style={styles.sub}>Only technicians can create reports</Text>
+      </View>
+    );
+  }
+
+  if (checking) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (alreadySubmitted) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.error}>Report already submitted</Text>
+        <Text style={styles.sub}>
+          You can only send one report at the end of the mission.
+        </Text>
+        <Pressable
+          style={styles.linkBtn}
+          onPress={() =>
+            router.push({
+              pathname: "/screens/report",
+              params: { missionId: String(missionId) },
+            })
+          }
+        >
+          <Text style={styles.linkText}>View submitted report</Text>
+        </Pressable>
       </View>
     );
   }
@@ -64,6 +114,11 @@ export default function CreateReport() {
       return;
     }
 
+    if (images.length === 0) {
+      Alert.alert("Error", "Please attach at least one photo");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -73,12 +128,24 @@ export default function CreateReport() {
         images,
       });
 
-      Alert.alert("Success", "Report sent");
-
-      setReportText("");
-      setImages([]);
+      Alert.alert(
+        "Success",
+        "Report submitted. You cannot edit it after submission.",
+        [
+          {
+            text: "OK",
+            onPress: () =>
+              router.replace({
+                pathname: "/screens/report",
+                params: { missionId: String(missionId) },
+              }),
+          },
+        ],
+      );
     } catch (err) {
-      Alert.alert("Error", "Failed to send report");
+      const message =
+        err instanceof Error ? err.message : "Failed to send report";
+      Alert.alert("Error", message);
     } finally {
       setLoading(false);
     }
@@ -87,9 +154,9 @@ export default function CreateReport() {
   return (
     <ScrollView style={styles.container}>
       <View>
-        <Text style={styles.title}>Create Report</Text>
+        <Text style={styles.title}>Submit Mission Report</Text>
         <Text style={styles.subtitle}>
-          Describe the mission outcome and attach images
+          Send once at the end of the mission (after driver delivery confirmation)
         </Text>
 
         <Text style={styles.meta}>Mission ID: {missionId}</Text>
@@ -98,7 +165,7 @@ export default function CreateReport() {
 
       <TextInput
         style={styles.input}
-        placeholder="Write your report..."
+        placeholder="Describe the mission outcome…"
         placeholderTextColor="#6b7280"
         multiline
         value={reportText}
@@ -131,14 +198,12 @@ export default function CreateReport() {
       >
         <Send size={18} color="white" />
         <Text style={styles.submitText}>
-          {loading ? "Sending..." : "Send Report"}
+          {loading ? "Submitting…" : "Submit report (final)"}
         </Text>
       </Pressable>
     </ScrollView>
   );
 }
-
-
 
 const styles = StyleSheet.create({
   container: {
@@ -146,42 +211,49 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     padding: 20,
   },
-
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: colors.background,
+    padding: 20,
   },
-
   error: {
     color: "red",
     fontSize: 18,
     fontWeight: "700",
+    textAlign: "center",
   },
-
   sub: {
     color: "#9ca3af",
     marginTop: 6,
+    textAlign: "center",
   },
-
+  linkBtn: {
+    marginTop: 20,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  linkText: {
+    color: "white",
+    fontWeight: "700",
+  },
   title: {
     color: "white",
     fontSize: 22,
     fontWeight: "800",
   },
-
   subtitle: {
     color: "#9ca3af",
     marginBottom: 10,
   },
-
   meta: {
     color: "#6b7280",
     fontSize: 12,
     marginBottom: 4,
   },
-
   input: {
     backgroundColor: "#111827",
     borderRadius: 16,
@@ -193,7 +265,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#1f2937",
   },
-
   uploadBtn: {
     marginTop: 16,
     backgroundColor: "#374151",
@@ -203,29 +274,24 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
   },
-
   uploadText: {
     color: "white",
     fontWeight: "600",
   },
-
   imageContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     marginTop: 16,
     gap: 10,
   },
-
   imageWrapper: {
     position: "relative",
   },
-
   image: {
     width: 100,
     height: 100,
     borderRadius: 12,
   },
-
   deleteBtn: {
     position: "absolute",
     top: 4,
@@ -234,7 +300,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 4,
   },
-
   submitBtn: {
     marginTop: 24,
     backgroundColor: "#3b82f6",
@@ -243,13 +308,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     gap: 8,
-
     shadowColor: "#3b82f6",
     shadowOpacity: 0.6,
     shadowRadius: 10,
     elevation: 10,
   },
-
   submitText: {
     color: "white",
     fontWeight: "700",

@@ -2,6 +2,7 @@ import { Gear } from "@/components/UI/Gear";
 import { colors } from "@/constants/theme";
 import { useAuth } from "@/hooks/useAuth";
 import { useMissions } from "@/hooks/useMissions";
+import { useNotifications } from "@/hooks/useNotifications";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
@@ -29,8 +30,7 @@ export default function Dashboard() {
   const router = useRouter();
   const { user } = useAuth();
   const { missions, loading, activeMissions, completedMissions } = useMissions();
-
-  const notifications = 3;
+  const { unreadCount: notifications } = useNotifications();
   const greeting = user?.full_name || user?.email || "User";
 
   return (
@@ -89,70 +89,56 @@ export default function Dashboard() {
 
         {loading ? (
           <Text style={styles.loadingText}>Loading missions...</Text>
-        ) : missions.length === 0 ? (
+        ) : activeMissions.length === 0 ? (
           <Text style={styles.loadingText}>No missions available.</Text>
         ) : (
-          missions.map((m) => {
-            const siteName = m.site?.name || m.site?.Site_name || "Unknown site";
-            const company =
-              m.driver?.full_name || m.technician?.full_name || m.company || "Team";
-            const address = m.site?.address || m.site?.Site_address || "";
-            const time = m.scheduled_start_date
-              ? new Date(m.scheduled_start_date).toLocaleDateString()
-              : m.time || "";
-            const items = Array.isArray(m.equipment_list)
-              ? m.equipment_list.length
-              : m.items ?? 0;
-            const status = m.status || m.status_text || "Pending";
-
-            return (
+          activeMissions.map((m) => (
               <Pressable
-                key={m.id ?? m.Mission_ID}
+                key={m.id}
                 style={styles.missionCard}
                 onPress={() =>
                   router.push({
                     pathname: "/screens/mission-details",
-                    params: { id: String(m.id ?? m.Mission_ID) },
+                    params: { id: m.id },
                   })
                 }
               >
-                <Text style={styles.site}>{siteName}</Text>
+                <Text style={styles.site}>{m.site}</Text>
 
                 <View style={styles.missionRow}>
                   <Building2 size={16} color="#9ca3af" />
-                  <Text style={styles.missionDetail}>{company}</Text>
+                  <Text style={styles.missionDetail}>{m.company}</Text>
                 </View>
 
                 <View style={styles.missionRow}>
                   <MapPin size={16} color="#9ca3af" />
-                  <Text style={styles.missionDetail}>{address}</Text>
+                  <Text style={styles.missionDetail}>{m.address}</Text>
                 </View>
 
                 <View style={styles.missionRow}>
                   <ClockIcon size={16} color="#9ca3af" />
-                  <Text style={styles.missionDetail}>{time}</Text>
+                  <Text style={styles.missionDetail}>{m.time}</Text>
                 </View>
 
                 <View style={styles.missionRow}>
                   <PackageIcon size={16} color="#9ca3af" />
-                  <Text style={styles.missionDetail}>{items} Items</Text>
+                  <Text style={styles.missionDetail}>{m.items} Items</Text>
                 </View>
 
                 <View
                   style={[
                     styles.statusBadge,
-                    status.toLowerCase() === "completed"
+                    m.statusRaw === "completed"
                       ? styles.completed
-                      : status.toLowerCase() === "pending"
-                      ? styles.pending
-                      : styles.inProgress,
+                      : m.statusRaw === "pending"
+                        ? styles.pending
+                        : styles.inProgress,
                   ]}
                 >
-                  <Text style={styles.statusText}>{status}</Text>
+                  <Text style={styles.statusText}>{m.status}</Text>
                 </View>
               </Pressable>
-            );
-          })
+            ))
         )}
       </ScrollView>
     </View>
@@ -322,5 +308,11 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
     fontSize: 12,
     marginTop: 4,
+  },
+
+  loadingText: {
+    color: "#9ca3af",
+    textAlign: "center",
+    marginTop: 20,
   },
 });

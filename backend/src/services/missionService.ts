@@ -46,8 +46,8 @@ export class MissionService {
     const { count, rows } = await Mission.findAndCountAll({
       where,
       include: [
-        { model: User, as: 'technician', attributes: ['id', 'full_name', 'email'] },
-        { model: User, as: 'driver', attributes: ['id', 'full_name', 'email'] },
+        { model: User, as: 'technician', attributes: ['id', 'full_name', 'email', 'phone'] },
+        { model: User, as: 'driver', attributes: ['id', 'full_name', 'email', 'phone'] },
         { model: Site, attributes: ['id', 'name', 'address'] },
       ],
       limit,

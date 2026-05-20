@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import axios from 'axios'
+import api from '../services/api'
 import logo from '../assets/logo.js'
 
 export default function Register() {
@@ -26,16 +26,20 @@ export default function Register() {
     }
     setLoading(true)
     try {
-      await axios.post('/api/auth/register', {
-        nom:       form.nom,
+      await api.post('/auth/register', {
+        full_name: form.nom,
         email:     form.email,
-        telephone: form.telephone,
+        phone:     form.telephone,
         password:  form.password,
         role:      'admin',
       })
       navigate('/login')
     } catch (err) {
-      setError(err.response?.data?.message || 'Erreur lors de la création du compte.')
+      setError(
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        'Erreur lors de la création du compte.',
+      )
     } finally {
       setLoading(false)
     }

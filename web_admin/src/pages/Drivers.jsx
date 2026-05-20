@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../services/api'
 import Sidebar from '../components/Sidebar'
 import TopBar  from '../components/TopBar'
 
@@ -24,17 +24,20 @@ export default function Drivers() {
   const [search, setSearch]   = useState('')
 
   useEffect(() => {
-    axios.get('/api/drivers', {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    })
-      .then(r => setDrivers(r.data))
+    api.get('/users?role=driver')
+      .then((r) => setDrivers(r.data.users || []))
       .catch(() => setDrivers(MOCK))
   }, [])
 
-  const displayed = drivers.filter(d =>
-    d.nom.toLowerCase().includes(search.toLowerCase()) ||
-    d.vehicule.toLowerCase().includes(search.toLowerCase())
-  )
+  const displayed = drivers.filter((d) => {
+    const name = d.full_name || d.nom || ''
+    const email = d.email || ''
+    return (
+      name.toLowerCase().includes(search.toLowerCase()) ||
+      email.toLowerCase().includes(search.toLowerCase()) ||
+      (d.vehicule || '').toLowerCase().includes(search.toLowerCase())
+    )
+  })
 
   const stats = {
     total:  drivers.length,
@@ -93,14 +96,14 @@ export default function Drivers() {
                     {d.nom.split(' ').map(n => n[0]).join('').slice(0,2)}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium" style={{ color:'#e2e8f0' }}>{d.nom}</p>
-                    <p className="text-xs" style={{ color:'rgba(148,163,184,.5)' }}>{d.telephone}</p>
+                    <p className="text-sm font-medium" style={{ color:'#e2e8f0' }}>{d.full_name || d.nom || 'Conducteur'}</p>
+                    <p className="text-xs" style={{ color:'rgba(148,163,184,.5)' }}>{d.email || d.telephone || 'N/A'}</p>
                   </div>
                   <span style={{
                     padding:'2px 10px', borderRadius:20, fontSize:11, fontWeight:500,
-                    ...statusStyle[d.statut]
+                    background: 'rgba(148,163,184,.1)', color: '#94a3b8'
                   }}>
-                    {d.statut}
+                    {d.statut || 'N/A'}
                   </span>
                 </div>
 
@@ -108,11 +111,11 @@ export default function Drivers() {
                   <div className="flex justify-between">
                     <div>
                       <p style={{ fontSize:10, color:'rgba(148,163,184,.4)' }}>Véhicule</p>
-                      <p style={{ fontSize:12, color:'#cbd5e1', marginTop:2 }}>{d.vehicule}</p>
+                      <p style={{ fontSize:12, color:'#cbd5e1', marginTop:2 }}>{d.vehicle || d.vehicule || 'N/A'}</p>
                     </div>
                     <div className="text-right">
                       <p style={{ fontSize:10, color:'rgba(148,163,184,.4)' }}>Missions totales</p>
-                      <p style={{ fontSize:18, fontWeight:500, color:'#60a5fa', marginTop:2 }}>{d.missions}</p>
+                      <p style={{ fontSize:18, fontWeight:500, color:'#60a5fa', marginTop:2 }}>{d.missions || 0}</p>
                     </div>
                   </div>
                 </div>

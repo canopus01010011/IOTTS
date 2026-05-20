@@ -49,4 +49,46 @@ export class ReportController {
       next(error);
     }
   }
+
+  /**
+   * GET /api/reports/list
+   */
+  static async getTechnicianReports(req: Request, res: Response, next: NextFunction) {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const status = req.query.status as string | undefined;
+
+      const result = await ReportService.getTechnicianReports({ status }, page, limit);
+      res.json({ success: true, ...result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /api/reports/detail/:missionId
+   */
+  static async getSubmissionStatus(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { missionId } = req.params;
+      const result = await ReportService.isMissionReportSubmitted(missionId as string);
+      res.json({ success: true, ...result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getReportDetail(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { missionId } = req.params;
+      const data = await ReportService.getReportByMissionId(missionId as string);
+      res.json({ success: true, data });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Mission not found') {
+        return res.status(404).json({ error: error.message });
+      }
+      next(error);
+    }
+  }
 }

@@ -140,9 +140,7 @@ export default function LoginScreen() {
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
           >
-            <Text style={styles.buttonText}>
-              Sign in as {role === "technician" ? "Technician" : "Driver"}
-            </Text>
+            <Text style={styles.buttonText}>Sign in</Text>
             <ChevronRight size={18} color="white" />
           </Pressable>
         </Animated.View>

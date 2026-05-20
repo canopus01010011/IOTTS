@@ -1,7 +1,38 @@
-import { Tabs } from "expo-router";
+import { useAuth } from "@/hooks/useAuth";
 import { Ionicons } from "@expo/vector-icons";
+import { Tabs, useRouter } from "expo-router";
+import { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
 
 export default function TabsLayout() {
+  const { user, isRestoring } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isRestoring && !user) {
+      router.replace("/login");
+    }
+  }, [isRestoring, user, router]);
+
+  if (isRestoring) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#020617",
+        }}
+      >
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
   return (
     <Tabs
       screenOptions={{

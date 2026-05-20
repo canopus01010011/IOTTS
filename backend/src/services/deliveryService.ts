@@ -82,16 +82,6 @@ export class DeliveryService {
     });
     await mission.update({ status: 'completed', end_date: new Date() });
 
-    await Report.findOrCreate({
-      where: { mission_id: mission.id },
-      defaults: {
-        mission_id: mission.id,
-        report_date: new Date(),
-        description: 'Mission completed',
-        delivery_photo_url: [],
-      },
-    });
-
     return {
       success: true,
       message: 'Mission confirmed successfully.',

@@ -1,4 +1,5 @@
-const baseURL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.100.97:5000/api";
+const baseURL =
+  process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:5000/api";
 
 class APIClient {
   private baseURL: string;
@@ -53,13 +54,41 @@ class APIClient {
 
       if (!response.ok) {
         const text = await response.text();
-        throw new Error(`HTTP ${response.status} ${text}`);
+        let message = text;
+        try {
+          const parsed = JSON.parse(text) as { error?: string; message?: string };
+          message = parsed.error ?? parsed.message ?? text;
+        } catch {
+          // keep raw text
+        }
+        throw new Error(message || `Request failed (${response.status})`);
+      }
+
+      if (response.status === 204) {
+        return undefined as T;
       }
 
       const data = await response.json();
       return data as T;
     } catch (error) {
       clearTimeout(timeoutId);
+
+      if (error instanceof Error) {
+        if (error.name === "AbortError") {
+          throw new Error(
+            "Request timed out. Check that the backend is running and EXPO_PUBLIC_API_URL points to your PC (use LAN IP on a physical device, not localhost).",
+          );
+        }
+        if (
+          error.message.includes("Network request failed") ||
+          error.message.includes("Failed to fetch")
+        ) {
+          throw new Error(
+            "Cannot reach the server. Start the backend and set EXPO_PUBLIC_API_URL in mobile_app/.env to http://YOUR_PC_IP:5000/api",
+          );
+        }
+      }
+
       throw error;
     }
   }
@@ -68,17 +97,22 @@ class APIClient {
     return this.request<T>(path, { method: "GET" });
   }
 
-  post<T>(path: string, body: any) {
+  post<T>(path: string, body?: unknown) {
     return this.request<T>(path, {
       method: "POST",
-      body,
+      body:
+        body instanceof FormData || body instanceof URLSearchParams
+          ? body
+          : body !== undefined
+            ? JSON.stringify(body)
+            : undefined,
     });
   }
 
-  put<T>(path: string, body: any) {
+  put<T>(path: string, body: unknown) {
     return this.request<T>(path, {
       method: "PUT",
-      body,
+      body: JSON.stringify(body),
     });
   }
 

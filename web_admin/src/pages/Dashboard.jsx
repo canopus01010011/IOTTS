@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../services/api'
 import Sidebar from '../components/Sidebar'
 import TopBar  from '../components/TopBar'
 
@@ -12,47 +12,57 @@ const badgeStyle = {
 }
 
 const MOCK_STATS = {
-  totalMissions: 142,
-  enCours:       38,
-  incidents:     7,
-  rapportsAttente: 16,
-  drivers:       5,
-  terminees:     85,
+  totalMissions: 0,
+  inProgressMissions: 0,
+  completedMissions: 0,
+  pendingMissions: 0,
+  totalTechnicians: 0,
+  totalDrivers: 0,
 }
 
-const MOCK_RECENTES = [
-  { id:1, ref:'MSN-091', site:'BTS Bab Ezzouar',  driver:'K. Benali',  equip:'Fibre + Antenne',  date:'12/04/2024', statut:'En cours'   },
-  { id:2, ref:'MSN-090', site:'Pylône Kouba',      driver:'A. Hamid',   equip:'Câblage réseau',   date:'11/04/2024', statut:'En cours'   },
-  { id:3, ref:'MSN-089', site:'Site Rouiba',       driver:'M. Saadi',   equip:'Groupe élec.',     date:'10/04/2024', statut:'Incident'   },
-  { id:4, ref:'MSN-088', site:'Dar El Beida',      driver:'O. Meziane', equip:'Clim. site',       date:'09/04/2024', statut:'En attente' },
-  { id:5, ref:'MSN-087', site:'Hussein Dey',       driver:'K. Benali',  equip:'Fibre optique',    date:'08/04/2024', statut:'Terminé'    },
-]
+const MOCK_RECENTES = []
+
+const statusMap = {
+  pending: 'En attente',
+  'in-progress': 'En cours',
+  completed: 'Terminé',
+}
+
+const formatMission = (m) => ({
+  id: m.id,
+  ref: m.id,
+  site: m.Site?.name || m.site_id || 'N/A',
+  driver: m.driver?.full_name || 'N/A',
+  equip: Array.isArray(m.equipment_list)
+    ? m.equipment_list.map(e => `${e.equipment_id} x${e.quantity}`).join(', ')
+    : 'N/A',
+  date: m.scheduled_start_date
+    ? new Date(m.scheduled_start_date).toLocaleDateString('fr-FR')
+    : 'N/A',
+  statut: statusMap[m.status] || m.status,
+})
 
 export default function Dashboard() {
   const [stats,    setStats]    = useState(MOCK_STATS)
   const [missions, setMissions] = useState([])
 
   useEffect(() => {
-    axios.get('/api/dashboard/stats', {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    })
-      .then(r => setStats(r.data))
+    api.get('/reports/stats/dashboard')
+      .then((r) => setStats(r.data.data || r.data || MOCK_STATS))
       .catch(() => setStats(MOCK_STATS))
 
-    axios.get('/api/missions?limit=5', {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    })
-      .then(r => setMissions(r.data))
+    api.get('/missions?limit=5')
+      .then((r) => setMissions((r.data.missions || []).map(formatMission)))
       .catch(() => setMissions(MOCK_RECENTES))
   }, [])
 
   const cards = [
     { label: 'Missions totales',      value: stats.totalMissions,     color: '#e2e8f0' },
-    { label: 'En cours',              value: stats.enCours,           color: '#60a5fa' },
-    { label: 'Terminées',             value: stats.terminees,         color: '#4ade80' },
-    { label: 'Incidents',             value: stats.incidents,         color: '#f87171' },
-    { label: 'Rapports en attente',   value: stats.rapportsAttente,   color: '#fbbf24' },
-    { label: 'Drivers actifs',        value: stats.drivers,           color: '#a78bfa' },
+    { label: 'En cours',              value: stats.inProgressMissions, color: '#60a5fa' },
+    { label: 'Terminées',             value: stats.completedMissions,  color: '#4ade80' },
+    { label: 'En attente',            value: stats.pendingMissions,    color: '#fbbf24' },
+    { label: 'Techniciens',           value: stats.totalTechnicians,   color: '#a78bfa' },
+    { label: 'Conducteurs',           value: stats.totalDrivers,       color: '#94a3b8' },
   ]
 
   return (

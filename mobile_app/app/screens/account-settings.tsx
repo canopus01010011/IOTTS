@@ -36,7 +36,7 @@ export default function AccountSettings() {
 
   useEffect(() => {
     if (user) {
-      setName(user.name);
+      setName(user.full_name);
       setEmail(user.email || "");
       setPhone(user.phone || "");
     }

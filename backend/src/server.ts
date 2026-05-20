@@ -29,7 +29,7 @@ async function startServer() {
     console.log("TEST ENV:", process.cwd());
 console.log("DB =", process.env.DATABASE_URL);
     // Start server
-    httpServer.listen(PORT, () => {
+    httpServer.listen(PORT, "0.0.0.0", () => {
       console.log(`
 ╔══════════════════════════════════════════════════════════╗
 ║                                                          ║

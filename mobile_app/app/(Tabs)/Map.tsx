@@ -10,8 +10,10 @@ import {
 } from "react-native";
 import MapView, { Marker, Region } from "react-native-maps";
 import MapViewDirections from "react-native-maps-directions";
+import * as Linking from "expo-linking";
 
 import { GOOGLE_API_KEY } from "@/constants/config";
+import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "@/hooks/useLocation";
 import { useMissions } from "@/hooks/useMissions";
 
@@ -20,13 +22,34 @@ const { width, height } = Dimensions.get("window");
 export default function MapScreen() {
   const { location, loading: locationLoading, enabled } = useLocation();
   const { activeMission } = useMissions();
+  const { user } = useAuth();
 
   const [distance, setDistance] = useState("");
   const [duration, setDuration] = useState("");
 
-  const technician = activeMission?.technician;
+  const site = activeMission?.raw
+    ? ((activeMission.raw as Record<string, any>).Site ??
+      (activeMission.raw as Record<string, any>).site)
+    : null;
+
+  const destination =
+    site?.latitude != null && site?.longitude != null
+      ? {
+          latitude: Number(site.latitude),
+          longitude: Number(site.longitude),
+        }
+      : null;
+
+  const contactPhone =
+    user?.role === "driver"
+      ? (activeMission?.raw as Record<string, any>)?.technician?.phone
+      : (activeMission?.raw as Record<string, any>)?.driver?.phone;
+
   const showDirections =
-    GOOGLE_API_KEY && GOOGLE_API_KEY !== "YOUR_GOOGLE_API_KEY";
+    !!destination &&
+    !!location &&
+    GOOGLE_API_KEY &&
+    GOOGLE_API_KEY !== "YOUR_GOOGLE_API_KEY";
 
   if (locationLoading) {
     return (
@@ -37,17 +60,17 @@ export default function MapScreen() {
     );
   }
 
-  if (!technician) {
+  if (!activeMission || !destination) {
     return (
       <View style={styles.center}>
-        <Text style={{ color: "white" }}>No active mission</Text>
+        <Text style={{ color: "white" }}>No active mission with site location</Text>
       </View>
     );
   }
 
   const region: Region = {
-    latitude: location?.latitude || 36.47,
-    longitude: location?.longitude || 2.83,
+    latitude: location?.latitude ?? destination.latitude,
+    longitude: location?.longitude ?? destination.longitude,
     latitudeDelta: 0.05,
     longitudeDelta: 0.05,
   };
@@ -57,12 +80,12 @@ export default function MapScreen() {
       <MapView style={styles.map} region={region} showsUserLocation={enabled}>
         {location && <Marker coordinate={location} title="You" />}
 
-        <Marker coordinate={technician} title={activeMission.site} />
+        <Marker coordinate={destination} title={activeMission.site} />
 
-        {location && showDirections && (
+        {showDirections && (
           <MapViewDirections
-            origin={location}
-            destination={technician}
+            origin={location!}
+            destination={destination}
             apikey={GOOGLE_API_KEY}
             strokeWidth={4}
             strokeColor="#3b82f6"
@@ -76,28 +99,29 @@ export default function MapScreen() {
 
       <View style={styles.card}>
         <Text style={styles.title}>{activeMission.site}</Text>
-        <Text style={styles.sub}>{activeMission.company}</Text>
+        <Text style={styles.sub}>{activeMission.address || activeMission.company}</Text>
 
         <Text style={styles.info}>
           📦 {activeMission.items} items • {activeMission.status}
         </Text>
 
-        <Text style={styles.info}>
-          📍 Distance: {distance || "..."} • ⏱ {duration || "..."}
-        </Text>
+        {showDirections && (
+          <Text style={styles.info}>
+            📍 Distance: {distance || "..."} • ⏱ {duration || "..."}
+          </Text>
+        )}
 
-        <Pressable
-          style={styles.callBtn}
-          onPress={() => {
-            const phone = activeMission.technician.phone;
-            import("expo-linking").then((Linking) =>
-              Linking.openURL(`tel:${phone}`),
-            );
-          }}
-        >
-          <Phone color="white" size={18} />
-          <Text style={styles.callText}>Call Technician</Text>
-        </Pressable>
+        {contactPhone ? (
+          <Pressable
+            style={styles.callBtn}
+            onPress={() => Linking.openURL(`tel:${contactPhone}`)}
+          >
+            <Phone color="white" size={18} />
+            <Text style={styles.callText}>
+              {user?.role === "driver" ? "Call Technician" : "Call Driver"}
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
@@ -105,33 +129,20 @@ export default function MapScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-
   map: {
     width: width,
     height: height,
   },
-
   center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#020617",
   },
-
   loadingText: {
     marginTop: 10,
     color: "#9ca3af",
   },
-
-  warning: {
-    position: "absolute",
-    top: 60,
-    left: 20,
-    right: 20,
-    backgroundColor: "red",
-    padding: 10,
-    borderRadius: 10,
-  },
-
   card: {
     position: "absolute",
     bottom: 90,
@@ -142,23 +153,19 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     elevation: 8,
   },
-
   title: {
     color: "white",
     fontSize: 16,
     fontWeight: "700",
   },
-
   sub: {
     color: "#9ca3af",
     marginTop: 2,
   },
-
   info: {
     color: "#9ca3af",
     marginTop: 6,
   },
-
   callBtn: {
     marginTop: 12,
     backgroundColor: "#3b82f6",
@@ -169,7 +176,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
   },
-
   callText: {
     color: "white",
     fontWeight: "600",

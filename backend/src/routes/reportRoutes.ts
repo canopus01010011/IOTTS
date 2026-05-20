@@ -10,6 +10,9 @@ router.use(authenticate);
 
 // Report endpoints (admin only)
 router.get('/missions', authorize('admin'), ReportController.getMissionReport);
+router.get('/list', authorize('admin'), ReportController.getTechnicianReports);
+router.get('/submitted/:missionId', ReportController.getSubmissionStatus);
+router.get('/detail/:missionId', authorize('admin'), ReportController.getReportDetail);
 router.get('/export/excel', authorize('admin'), ReportController.exportToExcel);
 
 // Statistics endpoints (all authenticated users)

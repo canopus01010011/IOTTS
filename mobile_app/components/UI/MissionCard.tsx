@@ -2,17 +2,9 @@ import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { Building2, Clock, Package } from "lucide-react-native";
+import type { MissionCardData } from "@/app/utils/missionMapper";
 
-type Mission = {
-  id: number;
-  site: string;
-  company: string;
-  status: string;
-  time: string;
-  items: number;
-};
-
-export default function MissionCard({ mission }: { mission: Mission }) {
+export default function MissionCard({ mission }: { mission: MissionCardData }) {
   const router = useRouter();
 
   return (
@@ -46,9 +38,11 @@ export default function MissionCard({ mission }: { mission: Mission }) {
         <Text
           style={[
             styles.status,
-            mission.status === "Completed"
+            mission.statusRaw === "completed"
               ? { color: "#22c55e" }
-              : { color: "#f59e0b" },
+              : mission.statusRaw === "in-progress"
+                ? { color: "#3b82f6" }
+                : { color: "#f59e0b" },
           ]}
         >
           {mission.status}
@@ -67,30 +61,25 @@ const styles = StyleSheet.create({
     borderColor: "#1f2937",
     marginBottom: 12,
   },
-
   site: {
     color: "white",
     fontWeight: "700",
     marginBottom: 6,
   },
-
   row: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
     marginTop: 4,
   },
-
   text: {
     color: "#9ca3af",
     fontSize: 12,
   },
-
   bottom: {
     marginTop: 10,
     alignItems: "flex-end",
   },
-
   status: {
     fontWeight: "700",
   },

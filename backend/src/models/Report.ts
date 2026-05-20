@@ -5,7 +5,7 @@ import { generateCode } from '../utils/idGenerator.js';
 
 interface ReportAttributes {
   id: string;
-  mission_id: string;
+  mission_id: string; 
   report_date: Date;
   description: string;
   delivery_photo_url: string[];

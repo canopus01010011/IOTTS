@@ -1,6 +1,22 @@
-import { Mission, User } from '../models/index.js';
+import { Confirmation, Mission, Picture, Report, Site, User } from '../models/index.js';
+import { isTechnicianReportSubmitted, PLACEHOLDER_DESCRIPTIONS } from '../utils/reportHelpers.js';
 import { Op } from 'sequelize';
 import ExcelJS from 'exceljs';
+
+const submittedReportWhere = {
+  [Op.or]: [
+    { notes: { [Op.and]: [{ [Op.ne]: null }, { [Op.ne]: '' }] } },
+    {
+      description: {
+        [Op.and]: [
+          { [Op.ne]: null },
+          { [Op.ne]: '' },
+          { [Op.notIn]: PLACEHOLDER_DESCRIPTIONS.filter(Boolean) },
+        ],
+      },
+    },
+  ],
+};
 
 export class ReportService {
   static async getMissionReport(filters: any, page: number = 1, limit: number = 50) {
@@ -19,6 +35,7 @@ export class ReportService {
       include: [
         { model: User, as: 'technician', attributes: ['id', 'full_name'] },
         { model: User, as: 'driver', attributes: ['id', 'full_name'] },
+        { model: Site, attributes: ['id', 'name', 'address'] },
       ],
       limit,
       offset,
@@ -71,5 +88,103 @@ export class ReportService {
 
     const buffer = await workbook.xlsx.writeBuffer();
     return Buffer.from(buffer);
+  }
+
+  /**
+   * List technician reports (Report rows linked to missions).
+   */
+  static async getTechnicianReports(filters: { status?: string }, page = 1, limit = 20) {
+    const offset = (page - 1) * limit;
+    const missionWhere: Record<string, unknown> = {};
+
+    if (filters.status) {
+      missionWhere.status = filters.status;
+    }
+
+    const missionInclude = {
+      model: Mission,
+      required: true,
+      where: Object.keys(missionWhere).length ? missionWhere : undefined,
+      include: [
+        { model: User, as: 'technician', attributes: ['id', 'full_name', 'phone'] },
+        { model: Site, attributes: ['id', 'name', 'address', 'latitude', 'longitude'] },
+      ],
+    };
+
+    const { count, rows } = await Report.findAndCountAll({
+      where: submittedReportWhere,
+      include: [missionInclude],
+      limit,
+      offset,
+      order: [['created_at', 'DESC']],
+    });
+
+    const totalReports = await Report.count({ where: submittedReportWhere });
+    const validated = await Report.count({
+      where: submittedReportWhere,
+      include: [{ model: Mission, required: true, where: { status: 'completed' } }],
+    });
+    const awaiting = await Report.count({
+      where: submittedReportWhere,
+      include: [{
+        model: Mission,
+        required: true,
+        where: { status: { [Op.in]: ['pending', 'in-progress'] } },
+      }],
+    });
+
+    return {
+      reports: rows,
+      total: count,
+      page,
+      totalPages: Math.ceil(count / limit),
+      summary: {
+        total: totalReports,
+        validated,
+        awaiting,
+      },
+    };
+  }
+
+  /**
+   * Full report detail for admin (mission + report + photos + confirmation).
+   */
+  static async getReportByMissionId(missionId: string) {
+    const mission = await Mission.findByPk(missionId, {
+      include: [
+        { model: User, as: 'technician', attributes: ['id', 'full_name', 'phone', 'email'] },
+        { model: User, as: 'driver', attributes: ['id', 'full_name', 'phone'] },
+        { model: Site },
+      ],
+    });
+
+    if (!mission) {
+      throw new Error('Mission not found');
+    }
+
+    const report = await Report.findOne({
+      where: { mission_id: missionId },
+      include: [{ model: Picture }],
+    });
+
+    const confirmation = await Confirmation.findOne({ where: { mission_id: missionId } });
+
+    return { mission, report, confirmation };
+  }
+
+  static async isMissionReportSubmitted(missionId: string) {
+    const report = await Report.findOne({ where: { mission_id: missionId } });
+    return {
+      submitted: isTechnicianReportSubmitted(report),
+      report: report
+        ? {
+            id: report.id,
+            mission_id: report.mission_id,
+            description: report.description,
+            notes: report.notes,
+            report_date: report.report_date,
+          }
+        : null,
+    };
   }
 }

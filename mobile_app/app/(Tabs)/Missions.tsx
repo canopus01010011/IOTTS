@@ -1,9 +1,11 @@
 import MissionCard from "@/components/UI/MissionCard";
 import { colors } from "@/constants/theme";
 import { useMissions } from "@/hooks/useMissions";
+import type { MissionCardData } from "@/app/utils/missionMapper";
 import { Search } from "lucide-react-native";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,27 +15,40 @@ import {
 } from "react-native";
 
 export default function MissionsScreen() {
-  const { missions } = useMissions();
-
+  const { missions, loading } = useMissions();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
 
   const filtered = missions.filter((m) => {
+    const query = search.toLowerCase();
     const matchSearch =
-      m.site.toLowerCase().includes(search.toLowerCase()) ||
-      m.company.toLowerCase().includes(search.toLowerCase());
+      m.site.toLowerCase().includes(query) ||
+      m.company.toLowerCase().includes(query) ||
+      m.address.toLowerCase().includes(query);
 
     const matchFilter =
       filter === "All" ||
       (filter === "Today" && m.date === "today") ||
-      (filter === "Completed" && m.status === "Completed") ||
-      (filter === "Pending" && m.status === "Pending");
+      (filter === "Completed" && m.statusRaw === "completed") ||
+      (filter === "Pending" && m.statusRaw === "pending");
 
     return matchSearch && matchFilter;
   });
 
   const today = filtered.filter((m) => m.date === "today");
-  const completed = filtered.filter((m) => m.status === "Completed");
+  const others = filtered.filter((m) => m.date !== "today");
+
+  const renderSection = (title: string, items: MissionCardData[]) => {
+    if (items.length === 0) return null;
+    return (
+      <>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        {items.map((m) => (
+          <MissionCard key={m.id} mission={m} />
+        ))}
+      </>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -65,21 +80,16 @@ export default function MissionsScreen() {
           ))}
         </View>
 
-        {today.length > 0 && (
+        {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        ) : filtered.length === 0 ? (
+          <Text style={styles.empty}>No missions match your filters.</Text>
+        ) : (
           <>
-            <Text style={styles.sectionTitle}>Today</Text>
-            {today.map((m) => (
-              <MissionCard key={m.id} mission={m} />
-            ))}
-          </>
-        )}
-
-        {completed.length > 0 && (
-          <>
-            <Text style={styles.sectionTitle}>Completed</Text>
-            {completed.map((m) => (
-              <MissionCard key={m.id} mission={m} />
-            ))}
+            {renderSection("Today", today)}
+            {renderSection("Upcoming & Other", others)}
           </>
         )}
       </ScrollView>
@@ -93,7 +103,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     padding: 20,
   },
-
+  center: {
+    marginTop: 40,
+    alignItems: "center",
+  },
+  empty: {
+    color: "#9ca3af",
+    textAlign: "center",
+    marginTop: 40,
+  },
   searchBox: {
     flexDirection: "row",
     alignItems: "center",
@@ -104,74 +122,33 @@ const styles = StyleSheet.create({
     borderColor: "#1f2937",
     gap: 8,
   },
-
   input: {
     color: "white",
     flex: 1,
   },
-
   filters: {
     flexDirection: "row",
     marginTop: 12,
     gap: 8,
+    flexWrap: "wrap",
   },
-
   filterBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,
     backgroundColor: "#1f2937",
   },
-
   activeFilter: {
     backgroundColor: colors.primary,
   },
-
   filterText: {
     color: "#9ca3af",
     fontSize: 12,
   },
-
   sectionTitle: {
     color: "white",
     fontWeight: "700",
     marginTop: 20,
     marginBottom: 10,
-  },
-
-  card: {
-    backgroundColor: "#111827",
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#1f2937",
-    marginBottom: 12,
-  },
-
-  site: {
-    color: "white",
-    fontWeight: "700",
-    marginBottom: 6,
-  },
-
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 4,
-  },
-
-  text: {
-    color: "#9ca3af",
-    fontSize: 12,
-  },
-
-  bottom: {
-    marginTop: 10,
-    alignItems: "flex-end",
-  },
-
-  status: {
-    fontWeight: "700",
   },
 });

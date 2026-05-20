@@ -1,18 +1,21 @@
+import { scanDelivery } from "@/app/services/delivery.service";
 import { useAuth } from "@/hooks/useAuth";
 import { useQRScanner } from "@/hooks/useQRScanner";
 import { PermissionResponse, useCameraPermissions } from "expo-camera";
-import { useEffect } from "react";
+import { useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
 import { Alert } from "react-native";
 
 type QRPageResult = {
   permission: PermissionResponse | null;
   requestPermission: () => Promise<PermissionResponse | null>;
   scanned: boolean;
-  data: any;
+  data: ReturnType<typeof useQRScanner>["data"];
   scanError: string | null;
   handleScan: ({ data }: { data: string }) => void;
   reset: () => void;
-  handleAction: () => void;
+  handleAction: () => Promise<void>;
+  confirming: boolean;
   role: "technician" | "driver";
 };
 
@@ -20,6 +23,10 @@ export function useQRPage(): QRPageResult {
   const [permission, requestPermission] = useCameraPermissions();
   const { user } = useAuth();
   const { scanned, data, scanError, handleScan, reset } = useQRScanner();
+  const { missionId: routeMissionId } = useLocalSearchParams<{
+    missionId?: string;
+  }>();
+  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     if (!permission) {
@@ -27,15 +34,27 @@ export function useQRPage(): QRPageResult {
     }
   }, [permission, requestPermission]);
 
-  const handleAction = () => {
-    if (!data || !user) {
+  const handleAction = async () => {
+    const missionId = data?.missionId || routeMissionId;
+
+    if (!missionId || !user) {
+      Alert.alert("Error", "Scan a valid mission QR code first.");
       return;
     }
 
-    const message =
-      user.role === "driver" ? "Delivery Started 🚚" : "Package Received 📦";
-
-    Alert.alert("Success", message);
+    try {
+      setConfirming(true);
+      const result = await scanDelivery(String(missionId));
+      Alert.alert("Success", result.message);
+      reset();
+    } catch (err) {
+      Alert.alert(
+        "Error",
+        err instanceof Error ? err.message : "Delivery confirmation failed",
+      );
+    } finally {
+      setConfirming(false);
+    }
   };
 
   return {
@@ -47,6 +66,7 @@ export function useQRPage(): QRPageResult {
     handleScan,
     reset,
     handleAction,
+    confirming,
     role: user?.role || "technician",
   };
 }

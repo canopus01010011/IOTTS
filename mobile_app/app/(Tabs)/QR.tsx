@@ -12,6 +12,7 @@ export default function QRScanScreen() {
     handleScan,
     reset,
     handleAction,
+    confirming,
     role,
   } = useQRPage();
 
@@ -25,6 +26,7 @@ export default function QRScanScreen() {
       handleScan={handleScan}
       reset={reset}
       handleAction={handleAction}
+      confirming={confirming}
       role={role}
     />
   );

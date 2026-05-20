@@ -1,24 +1,53 @@
 import { useState, useEffect, useRef } from 'react'
-import axios from 'axios'
+import api from '../services/api'
 import Sidebar from '../components/Sidebar'
 import TopBar  from '../components/TopBar'
 
-const MOCK = [
-  { id:1, ref:'MSN-091', site:'BTS Bab Ezzouar',  driver:'K. Benali',  technicien:'A. Hamid',   depart:'08:30', duree:'3h 45min', statut:'En route',   lat:36.7201, lng:3.1634, destLat:36.7372, destLng:3.1897 },
-  { id:2, ref:'MSN-090', site:'Pylône Kouba',      driver:'M. Saadi',   technicien:'Y. Brahim',  depart:'09:00', duree:'2h 10min', statut:'Sur place',  lat:36.7218, lng:3.0847, destLat:36.7218, destLng:3.0847 },
-  { id:3, ref:'MSN-089', site:'Site Rouiba',       driver:'O. Meziane', technicien:'N. Oukil',   depart:'07:45', duree:'1h 20min', statut:'Incident',   lat:36.7310, lng:3.2841, destLat:36.7310, destLng:3.2841 },
-  { id:4, ref:'MSN-088', site:'Dar El Beida',      driver:'K. Benali',  technicien:'R. Ferhat',  depart:'10:00', duree:'—',        statut:'En attente', lat:36.6918, lng:3.2156, destLat:36.6918, destLng:3.2156 },
-  { id:5, ref:'MSN-087', site:'Hussein Dey',       driver:'A. Hamid',   technicien:'A. Hamid',   depart:'06:30', duree:'4h 00min', statut:'Terminé',    lat:36.7456, lng:3.0962, destLat:36.7456, destLng:3.0962 },
-  { id:6, ref:'MSN-086', site:'BTS Hydra',         driver:'M. Saadi',   technicien:'Y. Brahim',  depart:'11:00', duree:'—',        statut:'Annulé',     lat:36.7500, lng:3.0500, destLat:36.7500, destLng:3.0500 },
-]
+const statusMap = {
+  pending: 'En attente',
+  'in-progress': 'En cours',
+  completed: 'Terminé',
+  cancelled: 'Annulé',
+  incident: 'Incident',
+}
 
 const STATUS = {
-  'En route':   { bg:'rgba(59,130,246,.12)',  color:'#60a5fa',  dot:'#3b82f6'  },
-  'Sur place':  { bg:'rgba(34,197,94,.1)',    color:'#4ade80',  dot:'#22c55e'  },
-  'En attente': { bg:'rgba(234,179,8,.1)',    color:'#fbbf24',  dot:'#eab308'  },
-  'Incident':   { bg:'rgba(239,68,68,.12)',   color:'#f87171',  dot:'#ef4444'  },
-  'Terminé':    { bg:'rgba(148,163,184,.1)',  color:'#94a3b8',  dot:'#64748b'  },
-  'Annulé':     { bg:'rgba(148,163,184,.08)', color:'#64748b',  dot:'#475569'  },
+  'En cours':    { bg:'rgba(59,130,246,.12)',  color:'#60a5fa',  dot:'#3b82f6'  },
+  'En attente':  { bg:'rgba(234,179,8,.1)',    color:'#fbbf24',  dot:'#eab308'  },
+  'Terminé':     { bg:'rgba(148,163,184,.1)',  color:'#94a3b8',  dot:'#64748b'  },
+  'Annulé':      { bg:'rgba(148,163,184,.08)', color:'#64748b',  dot:'#475569'  },
+  'Incident':    { bg:'rgba(239,68,68,.12)',   color:'#f87171',  dot:'#ef4444'  },
+}
+
+const formatDuration = (start, end) => {
+  if (!start || !end) return '—'
+  const diff = Math.abs(new Date(end) - new Date(start))
+  const minutes = Math.round(diff / 60000)
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  return `${hours}h ${rest.toString().padStart(2, '0')}min`
+}
+
+const formatMission = (mission) => {
+  const site = mission.Site || {}
+  const startAt = mission.start_date || mission.scheduled_start_date
+  return {
+    id: mission.id,
+    ref: mission.id,
+    site: site.name || mission.site_id || 'N/A',
+    driver: mission.driver?.full_name || 'N/A',
+    technicien: mission.technician?.full_name || 'N/A',
+    depart: startAt
+      ? new Date(startAt).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })
+      : '—',
+    duree: formatDuration(mission.scheduled_start_date, mission.scheduled_end_date),
+    statut: statusMap[mission.status] || mission.status || 'N/A',
+    statusValue: mission.status,
+    lat: Number(site.latitude) || 0,
+    lng: Number(site.longitude) || 0,
+    destLat: Number(site.latitude) || 0,
+    destLng: Number(site.longitude) || 0,
+  }
 }
 
 function MapModal({ mission, onClose }) {
@@ -62,7 +91,7 @@ function MapModal({ mission, onClose }) {
     L.marker([mission.destLat, mission.destLng], { icon: siteIcon })
       .addTo(map).bindPopup(`<b>${mission.site}</b><br/>Destination`)
 
-    if (mission.statut === 'En route') {
+    if (mission.statut === 'En cours') {
       const dLat = mission.destLat - 0.05
       const dLng = mission.destLng - 0.05
       L.marker([dLat, dLng], { icon: departIcon })
@@ -96,7 +125,7 @@ function MapModal({ mission, onClose }) {
             </span>
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-            {mission.statut === 'En route' && (
+            {mission.statut === 'En cours' && (
               <div style={{ display:'flex', alignItems:'center', gap:5 }}>
                 <span style={{ width:7, height:7, borderRadius:'50%', background:'#4ade80', display:'inline-block', animation:'pulse 1.5s infinite' }}></span>
                 <span style={{ fontSize:11, color:'#4ade80' }}>Live • {fmt(elapsed)}</span>
@@ -158,18 +187,18 @@ export default function SuiviMissions() {
   }, [])
 
   useEffect(() => {
-    axios.get('/api/missions/actives', { headers:{ Authorization:`Bearer ${localStorage.getItem('token')}` }})
-      .then(r => setMissions(r.data))
-      .catch(() => setMissions(MOCK))
+    api.get('/missions')
+      .then((r) => setMissions((r.data.missions || []).map(formatMission)))
+      .catch(() => setMissions([]))
   }, [])
 
-  const filtres  = ['Tous','En route','Sur place','En attente','Incident','Terminé','Annulé']
+  const filtres  = ['Tous','En attente','En cours','Terminé']
   const displayed = filtre === 'Tous' ? missions : missions.filter(m => m.statut === filtre)
 
   const stats = {
-    enRoute:  missions.filter(m => m.statut === 'En route').length,
-    surPlace: missions.filter(m => m.statut === 'Sur place').length,
-    incidents:missions.filter(m => m.statut === 'Incident').length,
+    enCours:  missions.filter(m => m.statut === 'En cours').length,
+    enAttente: missions.filter(m => m.statut === 'En attente').length,
+    termines: missions.filter(m => m.statut === 'Terminé').length,
   }
 
   return (
@@ -182,9 +211,9 @@ export default function SuiviMissions() {
           {/* Stats */}
           <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:20 }}>
             {[
-              { label:'En route',  value:stats.enRoute,  color:'#60a5fa' },
-              { label:'Sur place', value:stats.surPlace, color:'#4ade80' },
-              { label:'Incidents', value:stats.incidents,color:'#f87171' },
+              { label:'En cours',   value:stats.enCours,   color:'#60a5fa' },
+              { label:'En attente', value:stats.enAttente, color:'#fbbf24' },
+              { label:'Terminées',  value:stats.termines,  color:'#4ade80' },
             ].map(s => (
               <div key={s.label} style={{ background:'#111827', border:'0.5px solid rgba(59,130,246,.15)', borderRadius:12, padding:'14px 18px' }}>
                 <p style={{ fontSize:26, fontWeight:500, color:s.color }}>{s.value}</p>
@@ -238,7 +267,7 @@ export default function SuiviMissions() {
                 </div>
 
                 {/* GPS si en route */}
-                {(m.statut === 'En route' || m.statut === 'Sur place') && (
+                {(m.statut === 'En cours' || m.statut === 'En attente') && m.lat && m.lng && (
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'7px 10px', background:'rgba(59,130,246,.06)', border:'0.5px solid rgba(59,130,246,.12)', borderRadius:7 }}>
                     <p style={{ fontSize:10, color:'rgba(59,130,246,.7)' }}>📍 {m.lat.toFixed(4)}, {m.lng.toFixed(4)}</p>
                     <p style={{ fontSize:10, color:'#60a5fa' }}>Voir carte →</p>

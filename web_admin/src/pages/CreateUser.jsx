@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../services/api'
 import Sidebar from '../components/Sidebar'
 import TopBar  from '../components/TopBar'
 
@@ -13,34 +13,53 @@ export default function CreateUser() {
   const navigate = useNavigate()
   const [role, setRole] = useState('')
   const [form, setForm] = useState({
-    nom:'', identifiant:'', cin:'', email:'', telephone:'',
-    password:'', confirm:'', vehicule:'', specialite:''
+    nom:'', email:'', telephone:'', password:'', confirm:''
   })
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [createdUser, setCreatedUser] = useState(null)
   const [error, setError]     = useState('')
+
+  useEffect(() => {
+    if (!success) return undefined
+
+    const timer = setTimeout(() => {
+      setSuccess(false)
+      setCreatedUser(null)
+    }, 4000)
+
+    return () => clearTimeout(timer)
+  }, [success])
 
   const set = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setSuccess(false)
+    setCreatedUser(null)
     if (!role) { setError('Veuillez sélectionner un rôle.'); return }
     if (form.password !== form.confirm) { setError('Les mots de passe ne correspondent pas.'); return }
     if (form.password.length < 6) { setError('Mot de passe trop court (min. 6 caractères).'); return }
     setLoading(true)
+
+    const payload = {
+      full_name: form.nom,
+      email: form.email,
+      phone: form.telephone,
+      password: form.password,
+      role,
+    }
+
     try {
-      await axios.post('/api/users', {
-        full_name: form.nom,
-        email: form.email,
-        phone: form.telephone,
-        password: form.password,
-        role,
-      }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+      const res = await api.post('/users', payload)
+      const created = { ...(res.data?.user || res.data || {}), ...payload }
       setSuccess(true)
-      setTimeout(() => navigate('/dashboard/users'), 1500)
+      setCreatedUser(created)
+      setForm({ nom:'', email:'', telephone:'', password:'', confirm:'' })
+      setRole('')
     } catch (err) {
-      setError(err.response?.data?.message || 'Erreur lors de la création.')
+      setError(err.response?.data?.error || err.response?.data?.message || 'Erreur lors de la création.')
     } finally {
       setLoading(false)
     }
@@ -58,10 +77,16 @@ export default function CreateUser() {
         <TopBar title="Créer un compte utilisateur" />
         <main className="flex-1 p-6 max-w-2xl">
 
-          {success && (
-            <div className="mb-4 px-4 py-3 rounded-lg text-sm font-medium"
-              style={{ background:'rgba(34,197,94,.1)', color:'#4ade80', border:'0.5px solid rgba(34,197,94,.2)' }}>
-              Compte créé avec succès ! Redirection…
+          {success && createdUser && (
+            <div className="mb-4 p-4 rounded-lg text-sm font-medium"
+              style={{ background:'rgba(34,197,94,.08)', color:'#4ade80', border:'0.5px solid rgba(34,197,94,.2)' }}>
+              <div style={{ marginBottom:8, fontWeight:600 }}>Compte créé avec succès !</div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, fontSize:13, color:'#e2e8f0' }}>
+                <div><strong>Nom :</strong> {createdUser.full_name || createdUser.nom || '—'}</div>
+                <div><strong>Rôle :</strong> {createdUser.role || role || '—'}</div>
+                <div><strong>Email :</strong> {createdUser.email || '—'}</div>
+                <div><strong>Téléphone :</strong> {createdUser.phone || createdUser.telephone || '—'}</div>
+              </div>
             </div>
           )}
           {error && (
@@ -100,21 +125,10 @@ export default function CreateUser() {
             <div style={card}>
               <p style={sec}>Informations personnelles</p>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
-                <div>
+                <div style={{ gridColumn: '1 / -1' }}>
                   <label style={lbl}>Nom complet</label>
                   <input name="nom" value={form.nom} onChange={set}
                     placeholder="Karim Benali" required style={inp} />
-                </div>
-                <div>
-                  <label style={lbl}>Identifiant (ID)</label>
-                  <input name="identifiant" value={form.identifiant} onChange={set}
-                    placeholder={role === 'driver' ? 'DRV-001' : role === 'technician' ? 'TECH-001' : 'ID-001'}
-                    required style={inp} />
-                </div>
-                <div>
-                  <label style={lbl}>Numéro carte nationale</label>
-                  <input name="cin" value={form.cin} onChange={set}
-                    placeholder="123456789" required style={inp} />
                 </div>
                 <div>
                   <label style={lbl}>Numéro de téléphone</label>
@@ -129,33 +143,6 @@ export default function CreateUser() {
               </div>
             </div>
 
-            {/* Champ driver */}
-            {role === 'driver' && (
-              <div style={card}>
-                <p style={sec}>Informations driver</p>
-                <label style={lbl}>Véhicule / immatriculation</label>
-                <input name="vehicule" value={form.vehicule} onChange={set}
-                  placeholder="Camionnette — 16-DZ-142" style={inp} />
-              </div>
-            )}
-
-            {/* Champ technicien */}
-            {role === 'technician' && (
-              <div style={card}>
-                <p style={sec}>Informations technicien</p>
-                <label style={lbl}>Spécialité</label>
-                <select name="specialite" value={form.specialite} onChange={set}
-                  style={{ ...inp, cursor:'pointer' }}>
-                  <option value=""                style={{ background:'#0d1426' }}>Choisir une spécialité</option>
-                  <option value="Fibre optique"      style={{ background:'#0d1426' }}>Fibre optique</option>
-                  <option value="Antenne / pylône"   style={{ background:'#0d1426' }}>Antenne / pylône</option>
-                  <option value="Câblage réseau"     style={{ background:'#0d1426' }}>Câblage réseau</option>
-                  <option value="Groupe électrogène" style={{ background:'#0d1426' }}>Groupe électrogène</option>
-                  <option value="Climatisation site" style={{ background:'#0d1426' }}>Climatisation site</option>
-                  <option value="Polyvalent"         style={{ background:'#0d1426' }}>Polyvalent</option>
-                </select>
-              </div>
-            )}
 
             {/* Mot de passe */}
             <div style={card}>

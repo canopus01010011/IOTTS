@@ -1,10 +1,7 @@
 import { useState } from 'react'
-import axios from 'axios'
+import api from '../services/api'
 import logo from '../assets/logo.js'
 import { useNavigate, Link } from 'react-router-dom'
-
-const ADMIN_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjM3ZWQ2ZTk5LWI3NTItNDlkOS1hMWQ2LTk4MmExNzJiNTkwMiIsImVtYWlsIjoiYWRtaW5AZXF1aXB0cmFjay5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NzY3OTU1NzEsImV4cCI6MTc3NzQwMDM3MX0.cgU7jrqFRbn_2ictHyW8XDI7Z7NNdyI4ggieNq8yvjw'
-const ADMIN_EMAIL = 'admin@equiptrack.com'
 
 export default function Login() {
   const [email, setEmail]       = useState('')
@@ -18,17 +15,26 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      const res = await axios.post('/api/auth/login', { email, password })
-      localStorage.setItem('token', res.data.token)
-      navigate('/dashboard')
-    } catch {
-      // Fallback : token admin direct si API pas encore prête
-      if (email === ADMIN_EMAIL) {
-        localStorage.setItem('token', ADMIN_TOKEN)
-        navigate('/dashboard')
-      } else {
-        setError('Email ou mot de passe incorrect.')
+      const res = await api.post('/auth/login', { email, password })
+      const user = res?.data?.user
+      const tokens = res?.data?.tokens
+
+      if (!user || user.role !== 'admin') {
+        localStorage.removeItem('token')
+        localStorage.removeItem('userRole')
+        setError('Accès refusé — seul un compte administrateur peut se connecter.')
+        return
       }
+
+      localStorage.setItem('token', tokens.accessToken)
+      localStorage.setItem('userRole', 'admin')
+      navigate('/dashboard')
+    } catch (err) {
+      setError(
+        err?.response?.data?.error ||
+        err?.message ||
+        'Email ou mot de passe incorrect.',
+      )
     } finally {
       setLoading(false)
     }

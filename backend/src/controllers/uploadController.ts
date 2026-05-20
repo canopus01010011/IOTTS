@@ -1,7 +1,8 @@
 import type { Request, Response, NextFunction } from 'express';
 import { UploadService } from '../services/uploadService.js';
 import { AIService } from '../services/aiService.js';
-import { Equipment, Mission, Report } from '../models/index.js';
+import { Confirmation, Equipment, Mission, Report } from '../models/index.js';
+import { isTechnicianReportSubmitted } from '../utils/reportHelpers.js';
 
 export class UploadController {
   /**
@@ -141,7 +142,7 @@ export class UploadController {
   static async uploadMultiplePhotos(req: Request, res: Response, next: NextFunction) {
     try {
       const files = req.files as Express.Multer.File[];
-      const { missionId } = req.body;
+      const { missionId, description, notes } = req.body;
 
       if (!files || files.length === 0) {
         return res.status(400).json({ error: 'No photos uploaded' });
@@ -166,22 +167,67 @@ export class UploadController {
       }
 
       if (missionId && uploads.length > 0) {
-        const [report] = await Report.findOrCreate({
+        const mission = await Mission.findByPk(missionId as string);
+        if (!mission) {
+          return res.status(404).json({ error: 'Mission not found' });
+        }
+
+        if (req.user?.role === 'technician' && mission.technician_id !== req.user.id) {
+          return res.status(403).json({ error: 'You are not assigned to this mission' });
+        }
+
+        const confirmation = await Confirmation.findOne({
           where: { mission_id: missionId },
-          defaults: {
-            mission_id: missionId,
-            description: 'Delivery proof',
-            delivery_photo_url: [],
-          },
         });
-        await report.update({
-          delivery_photo_url: [...report.delivery_photo_url, ...uploads.map(upload => upload.url)],
-        });
+        if (!confirmation?.driver_confirm_time) {
+          return res.status(400).json({
+            error: 'Driver must confirm delivery before submitting the mission report',
+          });
+        }
+
+        const existing = await Report.findOne({ where: { mission_id: missionId } });
+        if (isTechnicianReportSubmitted(existing)) {
+          return res.status(409).json({
+            error: 'Report already submitted for this mission. Only one report is allowed.',
+          });
+        }
+
+        const reportText =
+          (typeof notes === 'string' && notes.trim()) ||
+          (typeof description === 'string' && description.trim()) ||
+          '';
+
+        if (!reportText) {
+          return res.status(400).json({
+            error: 'Report description is required',
+          });
+        }
+
+        const photoUrls = uploads.map((upload) => upload.url);
+
+        if (existing) {
+          await existing.update({
+            description: reportText,
+            notes: reportText,
+            delivery_photo_url: photoUrls,
+            report_date: new Date(),
+          });
+        } else {
+          await Report.create({
+            mission_id: missionId as string,
+            description: reportText,
+            notes: reportText,
+            delivery_photo_url: photoUrls,
+            report_date: new Date(),
+          });
+        }
       }
 
       res.json({
         success: true,
-        message: `${uploads.length} of ${files.length} photos uploaded successfully`,
+        message: missionId
+          ? 'Mission report submitted successfully'
+          : `${uploads.length} of ${files.length} photos uploaded successfully`,
         data: {
           uploaded: uploads,
           validation: validationResults,

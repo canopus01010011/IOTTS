@@ -1,6 +1,7 @@
 import { Gear } from "@/components/UI/Gear";
 import { colors } from "@/constants/theme";
 import { useAuth } from "@/hooks/useAuth";
+import { useMissions } from "@/hooks/useMissions";
 import { useRouter } from "expo-router";
 import {
   Bell,
@@ -27,10 +28,11 @@ const { width, height } = Dimensions.get("window");
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { missions, completedMissions } = useMissions();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const handleLogout = () => {
-    logout();
-    router.replace("/");
+  const handleLogout = async () => {
+    await logout();
+    router.replace("/login");
   };
   if (!user) {
     return (
@@ -69,7 +71,7 @@ export default function ProfileScreen() {
           <User size={40} color={colors.primary} />
         </View>
 
-        <Text style={styles.name}>{user.name}</Text>
+        <Text style={styles.name}>{user.full_name}</Text>
         <Text style={styles.role}>{user.role}</Text>
 
 
@@ -87,8 +89,8 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.statsRow}>
-        <StatCard label="Missions" value="3" />
-        <StatCard label="Completed" value="15" />
+        <StatCard label="Missions" value={String(missions.length)} />
+        <StatCard label="Completed" value={String(completedMissions.length)} />
       </View>
 
       <View style={styles.section}>

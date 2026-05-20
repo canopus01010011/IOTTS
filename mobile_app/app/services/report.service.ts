@@ -9,7 +9,11 @@ export const submitReport = async (data: {
   const formData = new FormData();
 
   formData.append("missionId", data.missionId);
-  formData.append("description", data.text);
+
+  if (data.text.trim()) {
+    formData.append("description", data.text.trim());
+    formData.append("notes", data.text.trim());
+  }
 
   data.images.forEach((uri, index) => {
     formData.append("photos", {

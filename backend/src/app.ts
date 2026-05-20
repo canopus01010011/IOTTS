@@ -68,7 +68,7 @@ const webAdminDist = path.resolve(__dirname, '../../web_admin/dist');
 if (fs.existsSync(webAdminDist)) {
   app.use(express.static(webAdminDist));
 
-  app.get('*', (req: Request, res: Response) => {
+  app.get((req: Request, res: Response) => {
     if (req.originalUrl.startsWith('/api')) {
       return res.status(404).json({ error: `Route ${req.originalUrl} not found` });
     }

@@ -12,6 +12,7 @@ type QRScannerViewProps = {
   handleScan: ({ data }: { data: string }) => void;
   reset: () => void;
   handleAction: () => void;
+  confirming?: boolean;
   role: "technician" | "driver";
 };
 
@@ -24,6 +25,7 @@ export function QRScannerView({
   handleScan,
   reset,
   handleAction,
+  confirming = false,
   role,
 }: QRScannerViewProps) {
   if (!permission) {
@@ -107,11 +109,17 @@ export function QRScannerView({
                 role === "driver"
                   ? styles.driverButton
                   : styles.technicianButton,
+                confirming && { opacity: 0.6 },
               ]}
               onPress={handleAction}
+              disabled={confirming}
             >
               <Text style={styles.primaryButtonText}>
-                {role === "driver" ? "Start Delivery" : "Confirm Package"}
+                {confirming
+                  ? "Confirming..."
+                  : role === "driver"
+                    ? "Start Delivery"
+                    : "Confirm Package"}
               </Text>
             </Pressable>
 
