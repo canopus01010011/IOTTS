@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { UploadService } from '../services/uploadService.js';
-import { AIService } from '../services/aiService.js';
+import { AIService, type AIValidationResponse } from '../services/aiService.js';
 import { Confirmation, Equipment, Mission, Report } from '../models/index.js';
 import { isTechnicianReportSubmitted } from '../utils/reportHelpers.js';
 
@@ -29,9 +29,11 @@ export class UploadController {
 
       if (!validation.valid) {
         return res.status(400).json({
-          error: 'Photo validation failed',
+          error: 'Photo rejetée par l\'IA — veuillez téléverser une autre image.',
+          message: 'Photo rejetée par l\'IA — veuillez téléverser une autre image.',
           issues: validation.issues,
           score: validation.score,
+          validation,
         });
       }
 
@@ -76,9 +78,11 @@ export class UploadController {
 
       if (!validation.valid) {
         return res.status(400).json({
-          error: 'Photo validation failed',
+          error: 'Photo rejetée par l\'IA — veuillez téléverser une autre image.',
+          message: 'Photo rejetée par l\'IA — veuillez téléverser une autre image.',
           issues: validation.issues,
           score: validation.score,
+          validation,
         });
       }
 
@@ -128,7 +132,10 @@ export class UploadController {
 
       res.json({
         success: true,
-        validation: validation,
+        validation,
+        message: validation.valid
+          ? 'Photo acceptée par l\'IA'
+          : 'Photo rejetée — téléversez une autre image',
       });
     } catch (error) {
       next(error);
@@ -148,22 +155,47 @@ export class UploadController {
         return res.status(400).json({ error: 'No photos uploaded' });
       }
 
-      const uploads = [];
-      const validationResults = [];
+      const validationResults: Array<{
+        filename: string;
+        valid: boolean;
+        score: number;
+        issues: string[];
+        blur_score?: number;
+        brightness_score?: number;
+        resolution?: { width: number; height: number };
+        clip?: AIValidationResponse['clip'];
+      }> = [];
 
       for (const file of files) {
-        // Validate each photo
         const validation = await AIService.validatePhoto(file.buffer, file.originalname);
-        validationResults.push(validation);
+        validationResults.push({
+          filename: file.originalname,
+          ...validation,
+        });
+      }
 
-        if (validation.valid) {
-          // Upload to Cloudinary
-          const uploadResult = await UploadService.uploadDeliveryPhoto(file.buffer, missionId || 'general');
-          uploads.push({
-            url: uploadResult.secure_url,
-            publicId: uploadResult.public_id,
-          });
-        }
+      const rejected = validationResults.filter((v) => !v.valid);
+      if (rejected.length > 0) {
+        return res.status(400).json({
+          error: 'Une ou plusieurs photos ont été rejetées par l\'IA. Téléversez d\'autres images.',
+          message: 'Photo(s) rejetée(s). Corrigez la qualité (netteté, luminosité, équipement visible) et réessayez.',
+          validation: validationResults,
+          rejected: rejected.map((r) => ({
+            filename: r.filename,
+            score: r.score,
+            issues: r.issues,
+            clip: r.clip,
+          })),
+        });
+      }
+
+      const uploads = [];
+      for (const file of files) {
+        const uploadResult = await UploadService.uploadDeliveryPhoto(file.buffer, missionId || 'general');
+        uploads.push({
+          url: uploadResult.secure_url,
+          publicId: uploadResult.public_id,
+        });
       }
 
       if (missionId && uploads.length > 0) {

@@ -1,4 +1,5 @@
 import { useLanguage } from "@/context/LanguageContext";
+import { useOffline } from "@/context/OfflineContext";
 import { CameraView, PermissionResponse } from "expo-camera";
 import { RefreshCcw } from "lucide-react-native";
 import React from "react";
@@ -28,8 +29,10 @@ export function QRScannerView({
   handleAction,
   confirming = false,
   role,
+  queuedOffline = false,
 }: QRScannerViewProps) {
   const { t, isRTL } = useLanguage();
+  const { isOnline } = useOffline();
 
   if (!permission) {
     return (
@@ -91,7 +94,11 @@ export function QRScannerView({
         <View style={styles.overlayBottom}>
           <Text style={styles.title}>{t("qr.scan")}</Text>
           <Text style={[styles.subtitle, isRTL && styles.rtlText]}>
-            {role === "driver" ? t("qr.driverHint") : t("qr.techHint")}
+            {!isOnline
+              ? `${t("offline.banner")} — ${role === "driver" ? t("qr.driverHint") : t("qr.techHint")}`
+              : role === "driver"
+                ? t("qr.driverHint")
+                : t("qr.techHint")}
           </Text>
         </View>
       </View>
@@ -111,6 +118,12 @@ export function QRScannerView({
               </>
             )}
 
+            {queuedOffline ? (
+              <Text style={[styles.cardText, { color: "#fbbf24" }]}>
+                {t("qr.queued")}
+              </Text>
+            ) : null}
+
             <Pressable
               style={[
                 styles.primaryButton,
@@ -125,9 +138,11 @@ export function QRScannerView({
               <Text style={styles.primaryButtonText}>
                 {confirming
                   ? t("qr.confirming")
-                  : role === "driver"
-                    ? t("qr.driverAction")
-                    : t("qr.techAction")}
+                  : !isOnline
+                    ? t("qr.saveOffline")
+                    : role === "driver"
+                      ? t("qr.driverAction")
+                      : t("qr.techAction")}
               </Text>
             </Pressable>
 

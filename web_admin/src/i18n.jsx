@@ -8,7 +8,7 @@ export const LANGUAGES = [
 
 const messages = {
   en: {
-    'app.control': 'EquipTrack Control',
+    'app.control': 'ErcTrack Control',
     'app.admin': 'Telecom Admin',
     'nav.dashboard': 'Dashboard',
     'nav.createMission': 'Create mission',
@@ -60,7 +60,7 @@ const messages = {
     'reports.detail': 'View detail',
   },
   fr: {
-    'app.control': 'Controle EquipTrack',
+    'app.control': 'Controle ErcTrack',
     'app.admin': 'Admin Telecom',
     'nav.dashboard': 'Tableau de bord',
     'nav.createMission': 'Creer mission',
@@ -112,7 +112,7 @@ const messages = {
     'reports.detail': 'Voir detail',
   },
   ar: {
-    'app.control': 'لوحة EquipTrack',
+    'app.control': 'لوحة ErcTrack',
     'app.admin': 'إدارة الاتصالات',
     'nav.dashboard': 'لوحة التحكم',
     'nav.createMission': 'إنشاء مهمة',

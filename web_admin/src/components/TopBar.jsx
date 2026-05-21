@@ -1,4 +1,4 @@
-import logo from '../assets/logo.js'
+import BrandLogo from './BrandLogo.jsx'
 import LanguageSelect from './LanguageSelect.jsx'
 import { useLanguage } from '../i18n.jsx'
 
@@ -32,23 +32,13 @@ export default function TopBar({ title }) {
 
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: '7px 10px',
+            padding: '4px 8px',
             background: 'rgba(15,23,42,.7)',
-            border: '1px solid rgba(96,165,250,.16)',
-            borderRadius: 8,
+            border: '1px solid var(--border)',
+            borderRadius: 10,
           }}
         >
-          <img
-            src={`data:image/png;base64,${logo}`}
-            alt="ErcTrac"
-            style={{ width: 28, height: 28, borderRadius: 7, objectFit: 'cover' }}
-          />
-          <span style={{ fontSize: 13, fontWeight: 800, color: '#f8fafc' }}>
-            Erc<span style={{ color: '#3b82f6' }}>Trac</span>
-          </span>
+          <BrandLogo size={32} showText />
         </div>
 
         <div
@@ -68,7 +58,7 @@ export default function TopBar({ title }) {
               width: 30,
               height: 30,
               borderRadius: '50%',
-              background: '#1d4ed8',
+              background: 'var(--accent)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

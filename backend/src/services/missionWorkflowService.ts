@@ -120,7 +120,7 @@ export async function notifyMissionStarting(mission: Mission) {
   await NotificationService.sendToUser(
     mission.driver_id,
     'C\'est l\'heure — entrepôt',
-    `Scannez le QR du conteneur pour démarrer la mission ${mission.id}.`,
+    `Scannez le QR de la mission ${mission.id} à l'entrepôt Oued Smar pour démarrer la simulation.`,
     { missionId: mission.id, type: 'mission_start' },
   );
   await NotificationService.sendToUser(
@@ -135,7 +135,7 @@ export async function notifyPickupStarted(mission: Mission) {
   await NotificationService.sendToUser(
     mission.technician_id,
     'Livraison démarrée',
-    `Conteneur scanné — mission ${mission.id} en cours. Suivez sur la carte.`,
+    `Départ entrepôt Oued Smar — mission ${mission.id} en cours. Suivez sur la carte.`,
     { missionId: mission.id, type: 'pickup_confirmed' },
   );
 }

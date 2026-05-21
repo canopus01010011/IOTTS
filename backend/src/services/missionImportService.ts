@@ -242,19 +242,11 @@ export async function buildImportTemplate() {
         },
     equipment_list: [
       {
-        type: 'Fibre optique',
-        label: 'Fibre optique',
-        serial_number: 'SN-FIB-2026-001',
-        model: 'FO-48C',
+        type: 'Équipement télécom',
+        label: 'Équipement télécom',
+        serial_number: 'SN-EXAMPLE-001',
+        model: 'EQ-MODEL-01',
         quantity: 1,
-        equipment_status: 'in_use',
-      },
-      {
-        type: 'Câblage réseau',
-        label: 'Câblage réseau',
-        serial_number: 'SN-CAB-2026-002',
-        model: 'CAT6-500M',
-        quantity: 2,
         equipment_status: 'in_use',
       },
     ],

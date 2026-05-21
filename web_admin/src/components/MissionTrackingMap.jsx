@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import api from '../services/api'
+import { WAREHOUSE } from '../constants/warehouse'
 
 const POLL_MS = 10000
 
@@ -110,8 +111,19 @@ export default function MissionTrackingMap({ mission }) {
       iconSize: [44, 44],
       iconAnchor: [22, 22],
     })
+    const warehouseIcon = L.divIcon({
+      className: '',
+      html: `<div style="width:40px;height:40px;background:#92400e;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #fbbf24;font-size:20px;">🏭</div>`,
+      iconSize: [40, 40],
+      iconAnchor: [20, 40],
+    })
 
     const bounds = []
+
+    L.marker([WAREHOUSE.latitude, WAREHOUSE.longitude], { icon: warehouseIcon })
+      .addTo(layersRef.current)
+      .bindPopup(`<b>${WAREHOUSE.name}</b><br/>Point de départ simulation`)
+    bounds.push([WAREHOUSE.latitude, WAREHOUSE.longitude])
 
     if (hasSite) {
       L.marker([siteLat, siteLng], { icon: siteIcon })
@@ -234,7 +246,7 @@ export default function MissionTrackingMap({ mission }) {
       ) : (
         <div style={{ padding: 32, textAlign: 'center' }}>
           <p style={{ color: 'rgba(148,163,184,.7)', fontSize: 13 }}>
-            En attente de positions… Lancez <code style={{ color: '#93c5fd' }}>python gps_simulator.py</code> dans iot_system.
+            En attente de positions… Lancez <code style={{ color: '#93c5fd' }}>python gps_simulator.py --listen</code> puis scannez le QR mission à l&apos;entrepôt.
           </p>
         </div>
       )}
@@ -260,6 +272,12 @@ export default function MissionTrackingMap({ mission }) {
             {hasContainer
               ? `${containerLat.toFixed(5)}, ${containerLng.toFixed(5)}`
               : 'En attente…'}
+          </p>
+        </div>
+        <div>
+          <p style={{ color: 'rgba(148,163,184,.45)', marginBottom: 4 }}>Entrepôt départ</p>
+          <p style={{ color: '#fbbf24' }}>
+            {WAREHOUSE.name} · {WAREHOUSE.latitude.toFixed(5)}, {WAREHOUSE.longitude.toFixed(5)}
           </p>
         </div>
         <div>

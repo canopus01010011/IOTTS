@@ -7,6 +7,7 @@ dotenv.config();
 
 import sequelize from '../config/database.js';
 import { Container, GPSDevice, Site } from '../models/index.js';
+import { WAREHOUSE } from '../constants/warehouse.js';
 
 const IOT_DEVICES = [
   { qr_code: 'CTR-IOT-001', capacity: 120, serial: 'package_001' },
@@ -19,16 +20,28 @@ async function seed() {
   console.log('✅ DB connected');
 
   let warehouse = await Site.findOne({
-    where: { name: 'Entrepôt — Départ simulation' },
+    where: { name: WAREHOUSE.name },
   });
   if (!warehouse) {
-    warehouse = await Site.create({
-      name: 'Entrepôt — Départ simulation',
-      address: 'Oued Semmar, Alger (début route OS_Draria)',
-      latitude: 36.706559,
-      longitude: 3.16704,
-    });
-    console.log(`Created warehouse site ${warehouse.id}`);
+    const legacy = await Site.findOne({ where: { name: 'Entrepôt — Départ simulation' } });
+    if (legacy) {
+      await legacy.update({
+        name: WAREHOUSE.name,
+        address: WAREHOUSE.address,
+        latitude: WAREHOUSE.latitude,
+        longitude: WAREHOUSE.longitude,
+      });
+      warehouse = legacy;
+      console.log(`Updated warehouse site ${warehouse.id} → ${WAREHOUSE.name}`);
+    } else {
+      warehouse = await Site.create({
+        name: WAREHOUSE.name,
+        address: WAREHOUSE.address,
+        latitude: WAREHOUSE.latitude,
+        longitude: WAREHOUSE.longitude,
+      });
+      console.log(`Created warehouse site ${warehouse.id}`);
+    }
   }
 
   for (const item of IOT_DEVICES) {
@@ -37,7 +50,7 @@ async function seed() {
       container = await Container.create({
         qr_code: item.qr_code,
         capacity: item.capacity,
-        status: 'in_transit',
+        status: 'available',
       });
       console.log(`Created container ${container.id} (${item.qr_code})`);
     } else {
@@ -50,7 +63,7 @@ async function seed() {
         container_id: container.id,
         device_serial_number: item.serial,
         battery_level: 100,
-        device_status: 'active',
+        device_status: 'inactive',
       });
       console.log(`Created GPS ${gps.id} serial=${item.serial}`);
     } else {

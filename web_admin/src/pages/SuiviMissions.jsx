@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import api from '../services/api'
 import Sidebar from '../components/Sidebar'
 import TopBar  from '../components/TopBar'
+import { WAREHOUSE } from '../constants/warehouse'
 
 const POLL_MS = 10000
 
@@ -115,8 +116,19 @@ function MapModal({ mission, liveGps, trackPoints, onClose }) {
       iconSize: [44, 44],
       iconAnchor: [22, 22],
     })
+    const warehouseIcon = L.divIcon({
+      className: '',
+      html: `<div style="width:40px;height:40px;background:#92400e;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #fbbf24;font-size:20px;">🏭</div>`,
+      iconSize: [40, 40],
+      iconAnchor: [20, 40],
+    })
 
     const bounds = []
+
+    L.marker([WAREHOUSE.latitude, WAREHOUSE.longitude], { icon: warehouseIcon })
+      .addTo(layersRef.current)
+      .bindPopup(`<b>${WAREHOUSE.name}</b><br/>Départ simulation`)
+    bounds.push([WAREHOUSE.latitude, WAREHOUSE.longitude])
 
     if (mission.hasCoords) {
       L.marker([mission.lat, mission.lng], { icon: siteIcon })

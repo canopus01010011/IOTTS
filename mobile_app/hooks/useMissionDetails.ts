@@ -1,9 +1,15 @@
-import { useEffect, useState } from "react";
 import { getEquipmentById } from "@/app/services/equipment.service";
 import { getGpsForContainer } from "@/app/services/gps.service";
 import { getMissionById } from "@/app/services/missions.service";
 import type { LiveGpsDevice } from "@/app/services/gps.service";
 import type { EquipmentItem } from "@/app/services/equipment.service";
+import {
+  getCachedMissionDetail,
+  setCachedMissionDetail,
+} from "@/app/utils/missionDetailsCache";
+import { isNetworkError } from "@/app/utils/networkError";
+import { useOffline } from "@/context/OfflineContext";
+import { useEffect, useState } from "react";
 
 type MissionEquipmentRow = EquipmentItem & { quantity: number };
 
@@ -13,6 +19,8 @@ export function useMissionDetails(missionId?: string) {
   const [gps, setGps] = useState<LiveGpsDevice | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFromCache, setIsFromCache] = useState(false);
+  const { isOnline, registerOnReconnect } = useOffline();
 
   useEffect(() => {
     if (!missionId) {
@@ -32,6 +40,8 @@ export function useMissionDetails(missionId?: string) {
         if (!active) return;
 
         setMission(missionData);
+        setIsFromCache(false);
+        await setCachedMissionDetail(String(missionId), missionData);
 
         const list = Array.isArray(missionData.equipment_list)
           ? missionData.equipment_list
@@ -55,16 +65,47 @@ export function useMissionDetails(missionId?: string) {
           }),
         );
 
-        const gpsDevice = await getGpsForContainer(missionData.container_id);
+        let gpsDevice: LiveGpsDevice | null = null;
+        if (missionData.container_id && isOnline) {
+          try {
+            gpsDevice = await getGpsForContainer(missionData.container_id);
+          } catch {
+            gpsDevice = null;
+          }
+        }
 
         if (!active) return;
         setEquipment(equipmentRows);
         setGps(gpsDevice);
       } catch (err) {
         if (!active) return;
-        setError(
-          err instanceof Error ? err.message : "Failed to load mission details",
-        );
+        const cached = await getCachedMissionDetail(String(missionId));
+        if (cached) {
+          setMission(cached);
+          setIsFromCache(true);
+          setError(null);
+          const list = Array.isArray(cached.equipment_list)
+            ? (cached.equipment_list as { equipment_id: string; quantity: number }[])
+            : [];
+          setEquipment(
+            list.map((item) => ({
+              id: item.equipment_id,
+              type: "Equipment",
+              serial_number: "—",
+              model: "—",
+              equipment_status: "unknown",
+              quantity: item.quantity ?? 1,
+            })),
+          );
+        } else {
+          setError(
+            isNetworkError(err)
+              ? "Offline — no cached mission data. Open this mission once while online."
+              : err instanceof Error
+                ? err.message
+                : "Failed to load mission details",
+          );
+        }
       } finally {
         if (active) setLoading(false);
       }
@@ -75,7 +116,23 @@ export function useMissionDetails(missionId?: string) {
     return () => {
       active = false;
     };
-  }, [missionId]);
+  }, [missionId, isOnline]);
 
-  return { mission, equipment, gps, loading, error };
+  useEffect(() => {
+    if (!missionId) return;
+    return registerOnReconnect(() => {
+      void (async () => {
+        try {
+          const missionData = await getMissionById(String(missionId));
+          setMission(missionData);
+          setIsFromCache(false);
+          await setCachedMissionDetail(String(missionId), missionData);
+        } catch {
+          // keep cache
+        }
+      })();
+    });
+  }, [missionId, registerOnReconnect]);
+
+  return { mission, equipment, gps, loading, error, isFromCache };
 }

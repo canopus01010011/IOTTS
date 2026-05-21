@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router-dom'
-import logo from '../assets/logo.js'
+import BrandLogo from '../components/BrandLogo.jsx'
 
 export default function Landing() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#0a0f1e' }}>
+    <div className="admin-page min-h-screen flex flex-col">
 
       {/* Navbar */}
       <nav style={{
@@ -14,26 +14,11 @@ export default function Landing() {
         background: '#080d1a',
         borderBottom: '0.5px solid rgba(59,130,246,.2)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <img
-            src={`data:image/png;base64,${logo}`}
-            alt="ErcTrac"
-            style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover' }}
-          />
-          <div>
-            <p style={{ fontSize: 16, fontWeight: 500, color: '#e2e8f0', lineHeight: 1.2 }}>
-              Erc<span style={{ color: '#3b82f6' }}>Trac</span>
-            </p>
-            <p style={{ fontSize: 11, color: 'rgba(148,163,184,.4)' }}>Télécom Admin</p>
-          </div>
-        </div>
+        <BrandLogo size={40} subtitle="Télécom Admin" />
         <button
           onClick={() => navigate('/login')}
-          style={{
-            background: '#1d4ed8', color: '#e2e8f0', border: 'none',
-            padding: '9px 22px', borderRadius: 8, fontSize: 13,
-            fontWeight: 500, cursor: 'pointer'
-          }}
+          className="admin-primary-btn"
+          style={{ padding: '9px 22px', fontSize: 13 }}
         >
           Connexion
         </button>
@@ -74,18 +59,13 @@ export default function Landing() {
         <div style={{ display: 'flex', gap: 12 }}>
           <button
             onClick={() => navigate('/login')}
-            style={{
-              background: '#1d4ed8', color: '#e2e8f0', border: 'none',
-              padding: '11px 28px', borderRadius: 8, fontSize: 14,
-              fontWeight: 500, cursor: 'pointer'
-            }}
+            className="admin-primary-btn"
+            style={{ padding: '11px 28px', fontSize: 14 }}
           >
             Accéder au dashboard
           </button>
-          <button style={{
-            background: 'transparent', color: '#60a5fa',
-            border: '0.5px solid rgba(59,130,246,.35)',
-            padding: '11px 28px', borderRadius: 8, fontSize: 14, cursor: 'pointer'
+          <button className="admin-secondary-btn" style={{
+            padding: '11px 28px', fontSize: 14,
           }}>
             En savoir plus
           </button>
@@ -118,7 +98,7 @@ export default function Landing() {
         borderTop: '0.5px solid rgba(59,130,246,.08)',
         fontSize: 11, color: 'rgba(148,163,184,.3)'
       }}>
-        © 2024 ErcTrac — Plateforme télécom
+        © 2026 ErcTrac — Plateforme télécom
       </div>
     </div>
   )

@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
-import logo from '../assets/logo.js'
+import BrandLogo from '../components/BrandLogo.jsx'
 import LanguageSelect from '../components/LanguageSelect.jsx'
 import { useLanguage } from '../i18n.jsx'
 
@@ -47,9 +47,9 @@ export default function Login() {
     width: '100%',
     background: 'var(--surface-2)',
     border: '1px solid var(--border)',
-    borderRadius: 8,
-    padding: '11px 12px',
-    fontSize: 13,
+    borderRadius: 12,
+    padding: '12px 14px',
+    fontSize: 14,
     color: '#f8fafc',
     outline: 'none',
   }
@@ -57,62 +57,48 @@ export default function Login() {
   const labelStyle = {
     display: 'block',
     fontSize: 11,
-    color: 'rgba(148,163,184,.68)',
+    fontWeight: 600,
+    color: 'rgba(139, 164, 190, 0.9)',
     marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: '0.04em',
   }
 
   return (
     <div
+      className="admin-page"
       style={{
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background:
-          'radial-gradient(circle at 50% 0%, rgba(59,130,246,.2), transparent 32rem), linear-gradient(180deg, #020617 0%, #0a0f1e 100%)',
-        padding: '0 16px',
+        padding: '24px 16px',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
-        <img
-          src={`data:image/png;base64,${logo}`}
-          alt="ErcTrac"
-          style={{
-            width: 50,
-            height: 50,
-            borderRadius: 10,
-            objectFit: 'cover',
-            border: '1px solid rgba(96,165,250,.24)',
-          }}
-        />
-        <div>
-          <p style={{ fontSize: 20, fontWeight: 800, color: '#f8fafc', lineHeight: 1.2 }}>
-            Erc<span style={{ color: '#3b82f6' }}>Trac</span>
-          </p>
-          <p style={{ fontSize: 12, color: 'rgba(148,163,184,.68)' }}>{t('app.admin')}</p>
-        </div>
+      <div style={{ marginBottom: 32 }}>
+        <BrandLogo size={56} subtitle={t('app.admin')} />
       </div>
 
-      <div className="admin-card" style={{ width: '100%', maxWidth: 380, padding: 30 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 800, color: '#f8fafc', marginBottom: 5 }}>
+      <div className="admin-card" style={{ width: '100%', maxWidth: 400, padding: 32 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', marginBottom: 6 }}>
           {t('login.title')}
         </h2>
-        <p style={{ fontSize: 12, color: 'rgba(148,163,184,.68)', marginBottom: 24 }}>
+        <p style={{ fontSize: 13, color: 'rgba(139, 164, 190, 0.85)', marginBottom: 22 }}>
           {t('login.subtitle')}
         </p>
-        <div style={{ marginBottom: 18 }}>
+        <div style={{ marginBottom: 20 }}>
           <LanguageSelect />
         </div>
 
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div>
             <label style={labelStyle}>{t('login.email')}</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@equiptrack.com"
+              placeholder="admin@ericsson.com"
               required
               style={inputStyle}
             />
@@ -137,8 +123,8 @@ export default function Login() {
                 color: '#f87171',
                 background: 'rgba(239,68,68,.08)',
                 border: '1px solid rgba(239,68,68,.2)',
-                borderRadius: 8,
-                padding: '9px 10px',
+                borderRadius: 10,
+                padding: '10px 12px',
               }}
             >
               {error}
@@ -149,21 +135,18 @@ export default function Login() {
             type="submit"
             disabled={loading}
             className="admin-primary-btn"
-            style={{ opacity: loading ? 0.6 : 1, marginTop: 4, width: '100%' }}
+            style={{
+              opacity: loading ? 0.6 : 1,
+              marginTop: 4,
+              width: '100%',
+              minHeight: 44,
+              borderRadius: 12,
+              fontSize: 14,
+            }}
           >
             {loading ? t('login.loading') : t('login.submit')}
           </button>
         </form>
-
-        <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(96,165,250,.72)', marginTop: 16 }}>
-          {t('login.forgot')}
-        </p>
-        <p style={{ textAlign: 'center', fontSize: 12, marginTop: 12, color: 'rgba(148,163,184,.58)' }}>
-          {t('login.noAccount')}{' '}
-          <Link to="/register" style={{ color: '#60a5fa', textDecoration: 'none', fontWeight: 700 }}>
-            {t('login.createAccount')}
-          </Link>
-        </p>
       </div>
     </div>
   )

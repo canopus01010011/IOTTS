@@ -13,6 +13,7 @@ import MapViewDirections from "react-native-maps-directions";
 import * as Linking from "expo-linking";
 
 import { GOOGLE_API_KEY } from "@/constants/config";
+import { WAREHOUSE } from "@/constants/warehouse";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "@/hooks/useLocation";
 import { useLiveGps } from "@/hooks/useLiveGps";
@@ -54,6 +55,11 @@ export default function MapScreen() {
         }
       : null;
 
+  const warehouse = {
+    latitude: WAREHOUSE.latitude,
+    longitude: WAREHOUSE.longitude,
+  };
+
   const iotCoordinate =
     hasIotPosition && iotLat != null && iotLng != null
       ? { latitude: iotLat, longitude: iotLng }
@@ -90,6 +96,7 @@ export default function MapScreen() {
     if (!destination) return;
 
     const points = [
+      warehouse,
       ...trailCoordinates,
       ...(iotCoordinate ? [iotCoordinate] : []),
       destination,
@@ -133,7 +140,7 @@ export default function MapScreen() {
           Mission {activeMission.id} — en attente
         </Text>
         <Text style={{ color: "#9ca3af", marginTop: 8, textAlign: "center", paddingHorizontal: 24 }}>
-          Le conducteur doit scanner le QR du conteneur à l&apos;entrepôt pour activer le suivi GPS.
+          Le conducteur assigné doit scanner le QR de la mission (MIS-…) à l&apos;entrepôt Oued Smar.
         </Text>
       </View>
     );
@@ -156,6 +163,8 @@ export default function MapScreen() {
       >
         {location && <Marker coordinate={location} title="You" pinColor="#3b82f6" />}
 
+        <Marker coordinate={warehouse} title={WAREHOUSE.name} pinColor="#f59e0b" />
+
         <Marker coordinate={destination} title={activeMission.site} pinColor="#22c55e" />
 
         {iotCoordinate && (
@@ -166,11 +175,18 @@ export default function MapScreen() {
           </Marker>
         )}
 
-        {trailCoordinates.length >= 2 && (
+        {trailCoordinates.length > 0 ? (
           <Polyline
-            coordinates={trailCoordinates}
+            coordinates={[warehouse, ...trailCoordinates]}
             strokeColor="#2563eb"
             strokeWidth={5}
+          />
+        ) : (
+          <Polyline
+            coordinates={[warehouse, destination]}
+            strokeColor="#6b7280"
+            strokeWidth={3}
+            lineDashPattern={[5, 5]}
           />
         )}
 

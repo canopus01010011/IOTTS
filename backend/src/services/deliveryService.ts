@@ -7,6 +7,8 @@ import {
   notifyPickupStarted,
   bumpUserScore,
 } from './missionWorkflowService.js';
+import { startMissionGpsSimulation } from './gpsSimulationService.js';
+import { assertWarehouseScanAllowed } from '../utils/missionSchedule.js';
 
 export interface ScanData {
   missionId?: string;
@@ -43,8 +45,22 @@ export class DeliveryService {
     throw new Error('Only drivers and technicians can confirm missions');
   }
 
-  /** Driver: container QR at warehouse, or mission QR if pending + has container. */
+  /** Driver: mission QR (MIS-…) or container QR at warehouse — assigned driver only. */
   private static async resolveDriverScan(data: ScanData): Promise<Mission> {
+    if (data.missionId) {
+      const mission = await Mission.findByPk(data.missionId, {
+        include: [{ model: Site }],
+      });
+      if (!mission) throw new Error('Mission not found');
+      if (mission.status !== 'pending') {
+        throw new Error('Cette mission n\'est plus en attente de prise en charge à l\'entrepôt.');
+      }
+      if (!mission.container_id) {
+        throw new Error('Mission sans conteneur — importez un JSON IoT avec conteneur GPS.');
+      }
+      return mission;
+    }
+
     if (data.qrCode) {
       const qr = data.qrCode.trim();
       const container = await Container.findOne({
@@ -82,19 +98,7 @@ export class DeliveryService {
       return mission;
     }
 
-    if (data.missionId) {
-      const mission = await Mission.findByPk(data.missionId);
-      if (!mission) throw new Error('Mission not found');
-      if (mission.status !== 'pending') {
-        throw new Error('Cette mission n\'est plus en attente de prise en charge à l\'entrepôt.');
-      }
-      if (!mission.container_id) {
-        throw new Error('Mission sans conteneur — scannez le QR du conteneur à l\'entrepôt.');
-      }
-      return mission;
-    }
-
-    throw new Error('Scannez le QR code du conteneur à l\'entrepôt.');
+    throw new Error('Scannez le QR de la mission (MIS-…) à l\'entrepôt Oued Smar.');
   }
 
   private static async handleDriverPickup(mission: Mission, driverId: string) {
@@ -104,6 +108,8 @@ export class DeliveryService {
     if (mission.status !== 'pending') {
       throw new Error(`Mission déjà ${mission.status}. Scan entrepôt impossible.`);
     }
+
+    assertWarehouseScanAllowed(mission.scheduled_start_date);
 
     const [confirmation, created] = await Confirmation.findOrCreate({
       where: { mission_id: mission.id },
@@ -125,13 +131,16 @@ export class DeliveryService {
 
     await mission.update({ status: 'in-progress', start_date: new Date() });
     await applyPickupStatuses(mission);
+    if (mission.container_id) {
+      await startMissionGpsSimulation(mission.id, mission.container_id);
+    }
     await bumpUserScore(mission.driver_id, 5);
     await notifyPickupStarted(mission);
 
     return {
       success: true,
       message:
-        'Conteneur scanné à l\'entrepôt. Mission en cours — suivi GPS et simulation actifs.',
+        'Mission scannée à l\'entrepôt Oued Smar. Simulation GPS démarrée depuis le point de départ.',
       missionId: mission.id,
       status: 'in-progress',
       nextStep: 'track_delivery',

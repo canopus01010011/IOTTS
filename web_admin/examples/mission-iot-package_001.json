@@ -1,5 +1,12 @@
 {
   "reference": "MSN-IOT-PKG001-DRARIA",
+  "iot_route": "OS_Draria",
+  "departure": {
+    "name": "Entrepôt Oued Smar",
+    "address": "Oued Smar, Alger (point départ GPX)",
+    "latitude": 36.706559,
+    "longitude": 3.16704
+  },
   "status": "pending",
   "scheduled_start_date": "2026-05-21T08:00:00.000Z",
   "scheduled_end_date": "2026-05-21T20:00:00.000Z",
@@ -28,7 +35,7 @@
     "gps_device": {
       "device_serial_number": "package_001",
       "battery_level": 100,
-      "device_status": "active"
+      "device_status": "inactive"
     }
   }
 }

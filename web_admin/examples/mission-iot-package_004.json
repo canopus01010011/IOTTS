@@ -1,0 +1,65 @@
+{
+  "reference": "MSN-IOT-PKG004-BBH",
+  "iot_route": "OS_BBH",
+  "departure": {
+    "name": "Warehouse Oued Smar",
+    "address": "Oued Smar, Alger",
+    "latitude": 36.706559,
+    "longitude": 3.16704
+  },
+  "status": "pending",
+ "scheduled_start_date": "2026-05-21T21:29:00.000Z",
+"scheduled_end_date": "2026-05-21T22:29:00.000Z",
+  "driver_id": "USR-Y6S76X",
+  "technician_id": "USR-GB3NNG",
+  "site": {
+    "name": "Livraison Baba Hssen",
+    "address": "honesty travel, 023299169 Rue des Frères Nedir, 16008 Baba Hassen, Algeria",
+    "latitude": 36.697948,
+    "longitude": 2.978671
+  },
+ "equipment_list": [
+  {
+    "type": "Équipement télécom",
+    "label": "Router 4G LTE",
+    "serial_number": "SN-IOT-PKG003-001",
+    "model": "Huawei B315",
+    "quantity": 1,
+    "equipment_status": "in_use"
+  },
+  {
+    "type": "Équipement télécom",
+    "label": "Switch réseau",
+    "serial_number": "SN-IOT-PKG003-002",
+    "model": "Cisco SG250-08",
+    "quantity": 2,
+    "equipment_status": "in_use"
+  },
+  {
+    "type": "Équipement télécom",
+    "label": "Antenne LTE",
+    "serial_number": "SN-IOT-PKG003-003",
+    "model": "Poynting XPOL-2",
+    "quantity": 1,
+    "equipment_status": "in_use"
+  },
+  {
+    "type": "Équipement électrique",
+    "label": "Batterie de secours",
+    "serial_number": "SN-IOT-PKG003-004",
+    "model": "12V 100Ah",
+    "quantity": 1,
+    "equipment_status": "available"
+  }
+ ],
+  "container": {
+    "qr_code": "CTR-IOT-004",
+    "capacity": 120,
+    "status": "available",
+    "gps_device": {
+      "device_serial_number": "package_004",
+      "battery_level": 100,
+      "device_status": "inactive"
+    }
+  }
+}

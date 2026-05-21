@@ -1,4 +1,7 @@
-import { submitReport } from "../app/services/report.service";
+import {
+  submitReport,
+  validateReportPhoto,
+} from "@/app/services/report.service";
 
 export const useReport = () => {
   const sendReport = async (data: {
@@ -9,5 +12,9 @@ export const useReport = () => {
     return await submitReport(data);
   };
 
-  return { sendReport };
+  const validatePhoto = async (uri: string) => {
+    return await validateReportPhoto(uri);
+  };
+
+  return { sendReport, validatePhoto };
 };

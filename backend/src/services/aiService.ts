@@ -1,7 +1,7 @@
 import axios from 'axios';
 import FormData from 'form-data';
 
-interface AIValidationResponse {
+export interface AIValidationResponse {
   valid: boolean;
   score: number;
   issues: string[];
@@ -9,10 +9,10 @@ interface AIValidationResponse {
   brightness_score?: number;
   resolution?: { width: number; height: number };
   clip?: {
-   accepted: boolean;
-   equipment_score: number;
-   best_label: string;
-   best_score: number;
+    accepted: boolean;
+    equipment_score: number;
+    best_label: string;
+    best_score: number;
   };
 }
 
@@ -20,7 +20,7 @@ export class AIService {
   private static AI_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
   /**
-   * Validate photo quality using AI microservice
+   * Validate photo quality using AI microservice (ai_module FastAPI).
    */
   static async validatePhoto(fileBuffer: Buffer, filename: string): Promise<AIValidationResponse> {
     try {
@@ -31,21 +31,31 @@ export class AIService {
         headers: {
           ...formData.getHeaders(),
         },
-        timeout: 10000, // 10 seconds timeout
+        timeout: 30000,
       });
 
+      const data = response.data;
       return {
-        valid: response.data.valid,
-        score: response.data.score,
-        issues: response.data.issues || [],
-        blur_score: response.data.blur_score,
-        brightness_score: response.data.brightness_score,
-        resolution: response.data.resolution,
-	clip: response.data.clip,
+        valid: Boolean(data.valid),
+        score: Number(data.score) || 0,
+        issues: data.issues || [],
+        blur_score: data.blur_score,
+        brightness_score: data.brightness_score,
+        resolution: data.resolution,
+        clip: data.clip,
       };
     } catch (error) {
       console.error('❌ AI Service error:', error);
-      // Fallback: accept photo if AI is down
+      const strict = process.env.AI_SERVICE_STRICT !== 'false';
+      if (strict) {
+        return {
+          valid: false,
+          score: 0,
+          issues: [
+            'Service IA indisponible. Démarrez ai_module (uvicorn api:app) et vérifiez AI_SERVICE_URL.',
+          ],
+        };
+      }
       return {
         valid: true,
         score: 0.5,
@@ -54,11 +64,7 @@ export class AIService {
     }
   }
 
-  /**
-   * Quick validation without AI (basic checks)
-   */
   static quickValidate(fileBuffer: Buffer): AIValidationResponse {
-    // Check file size (at least 10KB)
     if (fileBuffer.length < 10 * 1024) {
       return {
         valid: false,

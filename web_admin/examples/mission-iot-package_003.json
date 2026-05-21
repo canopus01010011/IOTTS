@@ -1,10 +1,17 @@
 {
   "reference": "MSN-IOT-PKG003-CHERAGA",
+  "iot_route": "OS_Cheraga",
+  "departure": {
+    "name": "Entrepôt Oued Smar",
+    "address": "Oued Smar, Alger (point départ GPX)",
+    "latitude": 36.707079,
+    "longitude": 3.166759
+  },
   "status": "pending",
-  "scheduled_start_date": "2026-05-21T10:00:00.000Z",
-  "scheduled_end_date": "2026-05-21T22:00:00.000Z",
-  "driver_id": "PASTE_DRIVER_ID_FROM_ADMIN",
-  "technician_id": "PASTE_TECHNICIAN_ID_FROM_ADMIN",
+"scheduled_start_date": "2026-05-21T21:29:00.000Z",
+"scheduled_end_date": "2026-05-21T22:29:00.000Z",
+  "driver_id": "USR-TYXH28",
+  "technician_id": "USR-Q2NFBF",
   "site": {
     "name": "Livraison Chéraga — Fin de parcours GPX",
     "address": "Chéraga, Alger (destination route OS_Cheraga)",
@@ -28,7 +35,7 @@
     "gps_device": {
       "device_serial_number": "package_003",
       "battery_level": 100,
-      "device_status": "active"
+      "device_status": "inactive"
     }
   }
 }

@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import logo from '../assets/logo.js'
+import BrandLogo from './BrandLogo.jsx'
 import { useLanguage } from '../i18n.jsx'
 
 const links = [
@@ -39,18 +39,7 @@ export default function Sidebar() {
         className="flex items-center gap-3 px-4 py-4"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
-        <img
-          src={`data:image/png;base64,${logo}`}
-          alt="ErcTrac logo"
-          className="w-10 h-10 object-cover"
-          style={{ borderRadius: 8, border: '1px solid rgba(96,165,250,.24)' }}
-        />
-        <div>
-          <p className="text-sm font-bold leading-tight" style={{ color: '#f8fafc' }}>
-            Erc<span style={{ color: '#3b82f6' }}>Trac</span>
-          </p>
-          <p className="text-xs" style={{ color: 'rgba(148,163,184,.62)' }}>{t('app.admin')}</p>
-        </div>
+        <BrandLogo size={40} subtitle={t('app.admin')} />
       </div>
 
       <nav className="flex-1 py-3 px-3">
@@ -68,8 +57,8 @@ export default function Sidebar() {
               isActive
                 ? {
                     color: '#f8fafc',
-                    background: 'rgba(59,130,246,.16)',
-                    border: '1px solid rgba(96,165,250,.24)',
+                    background: 'rgba(30, 168, 212, 0.16)',
+                    border: '1px solid rgba(30, 168, 212, 0.28)',
                     borderRadius: 8,
                   }
                 : {

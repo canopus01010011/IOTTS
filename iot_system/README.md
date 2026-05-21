@@ -1,6 +1,6 @@
 # IoT GPS Simulator (`iot_system`)
 
-Publishes simulated delivery GPS along GPX routes to MQTT. The **EquipTrack backend** subscribes to the same broker and stores positions for the web admin and mobile app.
+Publishes simulated delivery GPS along GPX routes to MQTT. The **ErcTrack backend** subscribes to the same broker and stores positions for the web admin and mobile app.
 
 ## Topic & payload
 
@@ -39,14 +39,18 @@ npm run dev
 
 Assign a mission `container_id` to one of the seeded containers (`CTR-IOT-*`).
 
-### 3. Simulator
+### 3. Simulator (listen — recommended)
 
 ```bash
 cd iot_system
 pip install paho-mqtt gpxpy python-dotenv
 cp .env.example .env
-python gps_simulator.py
+python gps_simulator.py --listen
 ```
+
+Each route starts at **Oued Smar** (first GPX point) only when the assigned driver scans the **mission QR** in the app (backend publishes `ericsson/simulation/start/package_00x`).
+
+Legacy: `python gps_simulator.py --all` runs all routes immediately.
 
 ### 4. Clients
 

@@ -1,3 +1,4 @@
+import { OfflineBanner } from "@/components/UI/OfflineBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/context/LanguageContext";
 import { Ionicons } from "@expo/vector-icons";
@@ -36,7 +37,9 @@ export default function TabsLayout() {
   }
 
   return (
-    <Tabs
+    <View style={{ flex: 1, backgroundColor: "#020617" }}>
+      <OfflineBanner />
+      <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
@@ -99,5 +102,6 @@ export default function TabsLayout() {
         }}
       />
     </Tabs>
+    </View>
   );
 }

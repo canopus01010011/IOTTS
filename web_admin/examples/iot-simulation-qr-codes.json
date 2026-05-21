@@ -1,29 +1,47 @@
 {
-  "description": "QR payloads for the three IoT GPX simulators. Print or display these values; the driver app accepts plain text or JSON.",
+  "description": "Trois simulations IoT (GPX). Départ = point Oued Smar ; la simulation démarre uniquement quand le conducteur assigné scanne le QR de la mission (MIS-…) à l'entrepôt.",
   "warehouse": {
-    "name": "Entrepôt — Départ simulation",
-    "note": "All routes start near Oued Semmar (run npm run seed:iot for warehouse site)",
+    "name": "Entrepôt Oued Smar",
+    "address": "Oued Smar, Alger — point de départ (premier point GPX)",
     "latitude": 36.706559,
-    "longitude": 3.16704
+    "longitude": 3.16704,
+    "map_marker": "🏭 Entrepôt — départ simulation"
+  },
+  "simulator": {
+    "command": "cd iot_system && python gps_simulator.py --listen",
+    "mqtt_start_topic": "ericsson/simulation/start/{device_serial}",
+    "note": "Le backend publie sur ce topic après scan QR mission par le conducteur assigné."
   },
   "simulations": [
     {
       "route": "OS_Draria",
       "gpx_file": "iot_system/OS_Draria.gpx",
       "mission_json": "web_admin/examples/mission-iot-package_001.json",
+      "mission_reference": "MSN-IOT-PKG001-DRARIA",
       "container_qr_code": "CTR-IOT-001",
       "gps_device_serial": "package_001",
       "mqtt_topic": "ericsson/sites/site_alger/package_001/gps",
+      "point_depart": {
+        "latitude": 36.706559,
+        "longitude": 3.16704,
+        "label": "Oued Smar (début GPX)"
+      },
       "driver_scan_warehouse": {
-        "plain": "CTR-IOT-001",
-        "json": {
+        "primary": "QR mission MIS-… (affiché dans l'admin après import)",
+        "plain_mission_example": "MIS-XXXXXXXX",
+        "json_mission": {
+          "type": "mission",
+          "missionId": "MIS-XXXXXXXX",
+          "scanType": "pickup"
+        },
+        "fallback_container_plain": "CTR-IOT-001",
+        "fallback_container_json": {
           "type": "container",
           "qrCode": "CTR-IOT-001"
         }
       },
       "technician_scan_site": {
-        "note": "After mission is created, scan the mission ID printed in admin or mission details",
-        "example_plain": "MIS-XXXXXXXX",
+        "plain": "MIS-XXXXXXXX",
         "json": {
           "missionId": "MIS-XXXXXXXX",
           "scanType": "delivery"
@@ -38,19 +56,31 @@
       "route": "OS_Meftah",
       "gpx_file": "iot_system/OS_Meftah.gpx",
       "mission_json": "web_admin/examples/mission-iot-package_002.json",
+      "mission_reference": "MSN-IOT-PKG002-MEFTAH",
       "container_qr_code": "CTR-IOT-002",
       "gps_device_serial": "package_002",
       "mqtt_topic": "ericsson/sites/site_alger/package_002/gps",
+      "point_depart": {
+        "latitude": 36.706686,
+        "longitude": 3.167203,
+        "label": "Oued Smar (début GPX)"
+      },
       "driver_scan_warehouse": {
-        "plain": "CTR-IOT-002",
-        "json": {
+        "primary": "QR mission MIS-…",
+        "plain_mission_example": "MIS-XXXXXXXX",
+        "json_mission": {
+          "type": "mission",
+          "missionId": "MIS-XXXXXXXX",
+          "scanType": "pickup"
+        },
+        "fallback_container_plain": "CTR-IOT-002",
+        "fallback_container_json": {
           "type": "container",
           "qrCode": "CTR-IOT-002"
         }
       },
       "technician_scan_site": {
-        "note": "Scan mission ID after import",
-        "example_plain": "MIS-XXXXXXXX",
+        "plain": "MIS-XXXXXXXX",
         "json": {
           "missionId": "MIS-XXXXXXXX",
           "scanType": "delivery"
@@ -65,19 +95,31 @@
       "route": "OS_Cheraga",
       "gpx_file": "iot_system/OS_Cheraga.gpx",
       "mission_json": "web_admin/examples/mission-iot-package_003.json",
+      "mission_reference": "MSN-IOT-PKG003-CHERAGA",
       "container_qr_code": "CTR-IOT-003",
       "gps_device_serial": "package_003",
       "mqtt_topic": "ericsson/sites/site_alger/package_003/gps",
+      "point_depart": {
+        "latitude": 36.707079,
+        "longitude": 3.166759,
+        "label": "Oued Smar (début GPX)"
+      },
       "driver_scan_warehouse": {
-        "plain": "CTR-IOT-003",
-        "json": {
+        "primary": "QR mission MIS-…",
+        "plain_mission_example": "MIS-XXXXXXXX",
+        "json_mission": {
+          "type": "mission",
+          "missionId": "MIS-XXXXXXXX",
+          "scanType": "pickup"
+        },
+        "fallback_container_plain": "CTR-IOT-003",
+        "fallback_container_json": {
           "type": "container",
           "qrCode": "CTR-IOT-003"
         }
       },
       "technician_scan_site": {
-        "note": "Scan mission ID after import",
-        "example_plain": "MIS-XXXXXXXX",
+        "plain": "MIS-XXXXXXXX",
         "json": {
           "missionId": "MIS-XXXXXXXX",
           "scanType": "delivery"

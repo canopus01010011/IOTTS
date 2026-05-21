@@ -1,10 +1,17 @@
 {
   "reference": "MSN-IOT-PKG002-MEFTAH",
+  "iot_route": "OS_Meftah",
+  "departure": {
+    "name": "Entrepôt Oued Smar",
+    "address": "Oued Smar, Alger (point départ GPX)",
+    "latitude": 36.706686,
+    "longitude": 3.167203
+  },
   "status": "pending",
-  "scheduled_start_date": "2026-05-21T09:00:00.000Z",
-  "scheduled_end_date": "2026-05-21T10:00:00.000Z",
-  "driver_id": "USR-Y6S76X",
-  "technician_id": "USR-GB3NNG",
+  "scheduled_start_date": "2026-05-21T07:20:00.000Z",
+  "scheduled_end_date": "2026-05-21T09:00:00.000Z",
+  "driver_id": "USR-TYXH28",
+  "technician_id": "USR-Q2NFBF",
   "site": {
     "name": "Livraison Meftah — Fin de parcours GPX",
     "address": "Meftah, Alger (destination route OS_Meftah)",
@@ -28,7 +35,7 @@
     "gps_device": {
       "device_serial_number": "package_002",
       "battery_level": 100,
-      "device_status": "active"
+      "device_status": "inactive"
     }
   }
 }

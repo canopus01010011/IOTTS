@@ -145,7 +145,7 @@ export default function MissionDetails() {
         {user?.role === "driver" && (
           <GlowButton
             icon={<Truck size={18} />}
-            text="Scanner conteneur (entrepôt)"
+            text="Scanner mission (entrepôt Oued Smar)"
             onPress={() =>
               router.push({
                 pathname: "/(Tabs)/QR",

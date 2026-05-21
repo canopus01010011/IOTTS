@@ -14,6 +14,7 @@ export default function QRScanScreen() {
     handleAction,
     confirming,
     role,
+    queuedOffline,
   } = useQRPage();
 
   return (
@@ -28,6 +29,7 @@ export default function QRScanScreen() {
       handleAction={handleAction}
       confirming={confirming}
       role={role}
+      queuedOffline={queuedOffline}
     />
   );
 }

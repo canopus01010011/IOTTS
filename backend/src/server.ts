@@ -35,7 +35,7 @@ console.log("DB =", process.env.DATABASE_URL);
       console.log(`
 ╔══════════════════════════════════════════════════════════╗
 ║                                                          ║
-║   🚀 EquipTrack Backend -         Running               ║
+║   🚀 ErckTrack Backend -          Running               ║
 ║                                                          ║
 ║   📍 Server: http://localhost:${PORT}                   ║
 ║   💚 Health: http://localhost:${PORT}/health            ║

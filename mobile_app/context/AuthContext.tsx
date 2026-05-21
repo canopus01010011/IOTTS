@@ -1,4 +1,11 @@
 import api from "@/app/services/api";
+import { isNetworkError } from "@/app/utils/networkError";
+import {
+  clearCachedUser,
+  getCachedUser,
+  setCachedUser,
+  type CachedUser,
+} from "@/app/utils/userCache";
 import {
   clearStoredToken,
   getStoredToken,
@@ -46,13 +53,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         api.setAuthToken(token);
         const me = await api.get<{ success: boolean; user: User }>("/auth/me");
-
-
         setUser(me.user);
+        await setCachedUser(me.user as CachedUser);
       } catch (err) {
         console.log("Failed to restore session", err);
+        if (isNetworkError(err)) {
+          const cached = await getCachedUser();
+          if (cached) {
+            setUser(cached as User);
+            return;
+          }
+        }
         api.setAuthToken(null);
         await clearStoredToken();
+        await clearCachedUser();
       } finally {
         setIsRestoring(false);
       }
@@ -90,11 +104,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await setStoredToken(token);
 
     setUser(user);
+    await setCachedUser(user as CachedUser);
   };
 
   const logout = async () => {
     api.setAuthToken(null);
     await clearStoredToken();
+    await clearCachedUser();
     setUser(null);
   };
 

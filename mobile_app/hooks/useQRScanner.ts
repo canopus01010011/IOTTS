@@ -35,6 +35,22 @@ export function useQRScanner() {
         }
       }
 
+      const missionId = String(parsed.missionId || "");
+      if (
+        parsed.type === "mission" ||
+        (missionId && parsed.type !== "container" && !parsed.qrCode)
+      ) {
+        setData({
+          missionId,
+          scanType: "mission",
+          site: parsed.site as string | undefined,
+          location: parsed.location as string | undefined,
+          label: missionId,
+        });
+        setScanned(true);
+        return;
+      }
+
       if (parsed.type === "container" || parsed.qrCode) {
         const qrCode = String(parsed.qrCode || parsed.containerQr || trimmed);
         setData({
@@ -46,19 +62,7 @@ export function useQRScanner() {
         return;
       }
 
-      const missionId = String(parsed.missionId || "");
-      if (!missionId) {
-        throw new Error("QR code does not contain a mission or container ID");
-      }
-
-      setData({
-        missionId,
-        scanType: "mission",
-        site: parsed.site as string | undefined,
-        location: parsed.location as string | undefined,
-        label: missionId,
-      });
-      setScanned(true);
+      throw new Error("QR code does not contain a mission or container ID");
     } catch (err) {
       setScanned(false);
       setData(null);

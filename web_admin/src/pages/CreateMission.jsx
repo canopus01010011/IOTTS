@@ -133,16 +133,21 @@ export default function CreateMission() {
             technician_id: techId,
             site_id: siteId,
             container_id: containerId,
-            equipment_list:
-              Array.isArray(t.equipment_list) && t.equipment_list.length > 0
-                ? t.equipment_list.map((e) => ({
-                    label: e.label || e.name || e.type || '',
-                    model: e.model || '',
-                    serial_number: e.serial_number || e.serial || '',
-                    quantity: e.quantity || 1,
-                    equipment_id: e.equipment_id || '',
-                  }))
-                : [{ label: '', model: '', serial_number: '', quantity: 1 }],
+            equipment_list: (() => {
+              const example =
+                Array.isArray(t.equipment_list) && t.equipment_list.length > 0
+                  ? t.equipment_list[0]
+                  : null
+              return [
+                {
+                  label: example?.label || example?.name || example?.type || 'Équipement télécom',
+                  model: example?.model || 'EQ-MODEL-01',
+                  serial_number: example?.serial_number || example?.serial || 'SN-EXAMPLE-001',
+                  quantity: example?.quantity || 1,
+                  equipment_id: '',
+                },
+              ]
+            })(),
           })
         }
       })
@@ -421,12 +426,7 @@ export default function CreateMission() {
         <TopBar title="Créer une mission" />
         <main className={`flex-1 p-6 ${mode === 'tracking' ? 'max-w-5xl' : 'max-w-3xl'}`}>
 
-          {mode !== 'tracking' && (
-            <p style={{ fontSize: 12, color: 'rgba(148,163,184,.5)', marginBottom: 16 }}>
-              Après création, la carte affiche le suivi IoT de cette mission uniquement (conteneur + site).
-              Utilisez le JSON démo <code style={{ color: '#93c5fd' }}>package_001</code> avec le simulateur GPX Draria.
-            </p>
-          )}
+      
 
           {mode !== 'tracking' && (
             <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
@@ -507,8 +507,8 @@ export default function CreateMission() {
               </div>
               <MissionTrackingMap mission={trackingMission} />
               <p style={{ fontSize: 11, color: 'rgba(148,163,184,.45)', marginTop: 12 }}>
-                Lancez le simulateur : <code style={{ color: '#93c5fd' }}>cd iot_system && python gps_simulator.py</code>
-                {' '}(device <code style={{ color: '#93c5fd' }}>package_001</code> sur la route OS_Draria).
+                Simulateur : <code style={{ color: '#93c5fd' }}>python gps_simulator.py --listen</code>
+                {' '}— départ <strong>Oued Smar</strong> au scan QR mission par le conducteur assigné.
               </p>
             </div>
           )}
@@ -530,7 +530,7 @@ export default function CreateMission() {
                     />
                   </div>
                   <div>
-                    <label style={lbl}>Début planifié (date + heure) *</label>
+                    <label style={lbl}>Début planifié </label>
                     <input
                       type="datetime-local"
                       value={toDateTimeLocal(form.scheduled_start_date)}
@@ -540,7 +540,7 @@ export default function CreateMission() {
                     />
                   </div>
                   <div>
-                    <label style={lbl}>Fin planifiée (date + heure) *</label>
+                    <label style={lbl}>Fin planifiée</label>
                     <input
                       type="datetime-local"
                       value={toDateTimeLocal(form.scheduled_end_date)}
@@ -556,7 +556,7 @@ export default function CreateMission() {
                 <p style={sec}>Assignation (FK users & sites)</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                   <div>
-                    <label style={lbl}>driver_id * (conducteur)</label>
+                    <label style={lbl}>driver_id </label>
                     <select
                       value={form.driver_id}
                       onChange={(e) => setField('driver_id', e.target.value)}
@@ -571,7 +571,7 @@ export default function CreateMission() {
                     </select>
                   </div>
                   <div>
-                    <label style={lbl}>technician_id * (technicien)</label>
+                    <label style={lbl}>technician_id (technicien)</label>
                     <select
                       value={form.technician_id}
                       onChange={(e) => setField('technician_id', e.target.value)}
@@ -586,7 +586,7 @@ export default function CreateMission() {
                     </select>
                   </div>
                   <div>
-                    <label style={lbl}>site_id *</label>
+                    <label style={lbl}>site_id </label>
                     <select
                       value={form.site_id}
                       onChange={(e) => setField('site_id', e.target.value)}
@@ -601,7 +601,7 @@ export default function CreateMission() {
                     </select>
                   </div>
                   <div>
-                    <label style={lbl}>container_id * (suivi IoT)</label>
+                    <label style={lbl}>container_id</label>
                     <select
                       value={form.container_id}
                       onChange={(e) => setField('container_id', e.target.value)}
@@ -621,7 +621,7 @@ export default function CreateMission() {
               <div style={card}>
                 <p style={sec}>Équipements de la mission *</p>
                 <p style={{ fontSize: 11, color: 'rgba(148,163,184,.45)', marginBottom: 12 }}>
-                  Type, modèle et numéro de série sont enregistrés dans la table equipment.
+                  Saisissez les équipements de cette mission (exemple ci-dessous). Utilisez « + Ajouter » pour en ajouter d&apos;autres — pas de liste globale en base.
                 </p>
                 {form.equipment_list.map((eq, i) => (
                   <div

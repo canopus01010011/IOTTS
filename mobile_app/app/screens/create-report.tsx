@@ -13,21 +13,31 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { colors } from "@/constants/theme";
-import { Camera, Send, Trash2 } from "lucide-react-native";
+import { Camera, Send, Trash2, CheckCircle2, XCircle } from "lucide-react-native";
 import { useAuth } from "@/hooks/useAuth";
 import { useReport } from "@/hooks/useReport";
 import api from "@/app/services/api";
+import {
+  formatValidationMessage,
+  type PhotoValidation,
+} from "@/app/services/report.service";
+
+type ValidatedImage = {
+  uri: string;
+  validation: PhotoValidation;
+};
 
 export default function CreateReport() {
   const router = useRouter();
   const { user } = useAuth();
-  const { sendReport } = useReport();
+  const { sendReport, validatePhoto } = useReport();
 
   const { missionId, siteName } = useLocalSearchParams();
 
   const [reportText, setReportText] = useState("");
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<ValidatedImage[]>([]);
   const [loading, setLoading] = useState(false);
+  const [validating, setValidating] = useState(false);
   const [checking, setChecking] = useState(true);
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
 
@@ -98,14 +108,37 @@ export default function CreateReport() {
       allowsMultipleSelection: true,
     });
 
-    if (!result.canceled) {
-      const newImages = result.assets.map((a) => a.uri);
-      setImages((prev) => [...prev, ...newImages]);
+    if (result.canceled) return;
+
+    setValidating(true);
+    try {
+      for (const asset of result.assets) {
+        try {
+          const validation = await validatePhoto(asset.uri);
+          if (!validation.valid) {
+            Alert.alert(
+              "Photo rejected by AI",
+              `${formatValidationMessage(validation)}\n\nPlease upload another picture.`,
+            );
+            continue;
+          }
+          setImages((prev) => {
+            if (prev.some((p) => p.uri === asset.uri)) return prev;
+            return [...prev, { uri: asset.uri, validation }];
+          });
+        } catch (err) {
+          const message =
+            err instanceof Error ? err.message : "AI validation failed";
+          Alert.alert("Validation error", message);
+        }
+      }
+    } finally {
+      setValidating(false);
     }
   };
 
   const removeImage = (uri: string) => {
-    setImages((prev) => prev.filter((img) => img !== uri));
+    setImages((prev) => prev.filter((img) => img.uri !== uri));
   };
 
   const handleSubmit = async () => {
@@ -115,7 +148,7 @@ export default function CreateReport() {
     }
 
     if (images.length === 0) {
-      Alert.alert("Error", "Please attach at least one photo");
+      Alert.alert("Error", "Please attach at least one AI-validated photo");
       return;
     }
 
@@ -125,7 +158,7 @@ export default function CreateReport() {
       await sendReport({
         missionId: String(missionId),
         text: reportText,
-        images,
+        images: images.map((i) => i.uri),
       });
 
       Alert.alert(
@@ -143,8 +176,13 @@ export default function CreateReport() {
         ],
       );
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to send report";
+      const e = err as Error & { data?: { validation?: PhotoValidation[]; rejected?: PhotoValidation[] } };
+      let message = e.message || "Failed to send report";
+      const rejected = e.data?.rejected as Array<{ score?: number; issues?: string[] }> | undefined;
+      if (rejected?.length) {
+        const first = rejected[0];
+        message = `Photo rejected (score ${Math.round((first.score ?? 0) * 100)}%)\n${(first.issues || []).join("\n")}\n\nUpload another picture.`;
+      }
       Alert.alert("Error", message);
     } finally {
       setLoading(false);
@@ -156,7 +194,7 @@ export default function CreateReport() {
       <View>
         <Text style={styles.title}>Submit Mission Report</Text>
         <Text style={styles.subtitle}>
-          Send once at the end of the mission (after driver delivery confirmation)
+          Photos are checked by AI before upload. Rejected images must be replaced.
         </Text>
 
         <Text style={styles.meta}>Mission ID: {missionId}</Text>
@@ -172,21 +210,51 @@ export default function CreateReport() {
         onChangeText={setReportText}
       />
 
-      <Pressable style={styles.uploadBtn} onPress={pickImage}>
-        <Camera color="white" size={18} />
-        <Text style={styles.uploadText}>Upload Images</Text>
+      <Pressable
+        style={[styles.uploadBtn, validating && { opacity: 0.6 }]}
+        onPress={pickImage}
+        disabled={validating}
+      >
+        {validating ? (
+          <ActivityIndicator color="white" size="small" />
+        ) : (
+          <Camera color="white" size={18} />
+        )}
+        <Text style={styles.uploadText}>
+          {validating ? "AI validation…" : "Upload Images (AI check)"}
+        </Text>
       </Pressable>
 
       <View style={styles.imageContainer}>
-        {images.map((img, i) => (
-          <View key={i} style={styles.imageWrapper}>
-            <Image source={{ uri: img }} style={styles.image} />
-            <Pressable
-              style={styles.deleteBtn}
-              onPress={() => removeImage(img)}
-            >
-              <Trash2 size={14} color="white" />
-            </Pressable>
+        {images.map((item, i) => (
+          <View key={i} style={styles.imageCard}>
+            <View style={styles.imageWrapper}>
+              <Image source={{ uri: item.uri }} style={styles.image} />
+              <Pressable
+                style={styles.deleteBtn}
+                onPress={() => removeImage(item.uri)}
+              >
+                <Trash2 size={14} color="white" />
+              </Pressable>
+            </View>
+            <View style={styles.validationBox}>
+              <View style={styles.validationRow}>
+                {item.validation.valid ? (
+                  <CheckCircle2 size={14} color="#22c55e" />
+                ) : (
+                  <XCircle size={14} color="#ef4444" />
+                )}
+                <Text style={styles.validationTitle}>
+                  IA {Math.round(item.validation.score * 100)}%
+                </Text>
+              </View>
+              {item.validation.clip ? (
+                <Text style={styles.validationMeta}>
+                  {item.validation.clip.best_label} ·{" "}
+                  {Math.round(item.validation.clip.best_score * 100)}%
+                </Text>
+              ) : null}
+            </View>
           </View>
         ))}
       </View>
@@ -219,7 +287,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   error: {
-    color: "red",
+    color: "#f87171",
     fontSize: 18,
     fontWeight: "700",
     textAlign: "center",
@@ -248,6 +316,8 @@ const styles = StyleSheet.create({
   subtitle: {
     color: "#9ca3af",
     marginBottom: 10,
+    marginTop: 4,
+    lineHeight: 20,
   },
   meta: {
     color: "#6b7280",
@@ -273,6 +343,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     gap: 8,
+    alignItems: "center",
   },
   uploadText: {
     color: "white",
@@ -282,14 +353,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     marginTop: 16,
-    gap: 10,
+    gap: 12,
+  },
+  imageCard: {
+    width: 120,
   },
   imageWrapper: {
     position: "relative",
   },
   image: {
-    width: 100,
-    height: 100,
+    width: 120,
+    height: 120,
     borderRadius: 12,
   },
   deleteBtn: {
@@ -300,16 +374,40 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 4,
   },
+  validationBox: {
+    marginTop: 6,
+    backgroundColor: "rgba(30, 168, 212, 0.12)",
+    borderRadius: 8,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: "rgba(30, 168, 212, 0.25)",
+  },
+  validationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  validationTitle: {
+    color: "#e2e8f0",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  validationMeta: {
+    color: "#94a3b8",
+    fontSize: 10,
+    marginTop: 2,
+  },
   submitBtn: {
     marginTop: 24,
-    backgroundColor: "#3b82f6",
+    marginBottom: 40,
+    backgroundColor: colors.primary,
     padding: 16,
     borderRadius: 14,
     flexDirection: "row",
     justifyContent: "center",
     gap: 8,
-    shadowColor: "#3b82f6",
-    shadowOpacity: 0.6,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.4,
     shadowRadius: 10,
     elevation: 10,
   },

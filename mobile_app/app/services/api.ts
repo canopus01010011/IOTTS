@@ -55,13 +55,26 @@ class APIClient {
       if (!response.ok) {
         const text = await response.text();
         let message = text;
+        let payload: Record<string, unknown> | undefined;
         try {
-          const parsed = JSON.parse(text) as { error?: string; message?: string };
+          const parsed = JSON.parse(text) as {
+            error?: string;
+            message?: string;
+            validation?: unknown;
+            rejected?: unknown;
+          };
+          payload = parsed as Record<string, unknown>;
           message = parsed.error ?? parsed.message ?? text;
         } catch {
           // keep raw text
         }
-        throw new Error(message || `Request failed (${response.status})`);
+        const err = new Error(message || `Request failed (${response.status})`) as Error & {
+          status?: number;
+          data?: Record<string, unknown>;
+        };
+        err.status = response.status;
+        err.data = payload;
+        throw err;
       }
 
       if (response.status === 204) {

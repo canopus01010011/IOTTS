@@ -1,6 +1,7 @@
 import MissionCard from "@/components/UI/MissionCard";
 import { colors } from "@/constants/theme";
 import { useLanguage } from "@/context/LanguageContext";
+import { useOffline } from "@/context/OfflineContext";
 import { useMissions } from "@/hooks/useMissions";
 import type { MissionCardData } from "@/app/utils/missionMapper";
 import { Search } from "lucide-react-native";
@@ -16,7 +17,8 @@ import {
 } from "react-native";
 
 export default function MissionsScreen() {
-  const { missions, loading } = useMissions();
+  const { missions, loading, isFromCache } = useMissions();
+  const { isOnline } = useOffline();
   const { t } = useLanguage();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
@@ -66,6 +68,12 @@ export default function MissionsScreen() {
           />
         </View>
 
+        {(isFromCache || !isOnline) && !loading ? (
+          <Text style={styles.cacheHint}>
+            {isFromCache ? t("offline.cachedData") : t("offline.banner")}
+          </Text>
+        ) : null}
+
         <View style={styles.filters}>
           {["All", "Today", "Completed", "Pending"].map((f) => (
             <Pressable
@@ -92,7 +100,11 @@ export default function MissionsScreen() {
             <ActivityIndicator size="large" color={colors.primary} />
           </View>
         ) : filtered.length === 0 ? (
-          <Text style={styles.empty}>{t("missions.empty")}</Text>
+          <Text style={styles.empty}>
+            {!isOnline && missions.length === 0
+              ? t("missions.offlineEmpty")
+              : t("missions.empty")}
+          </Text>
         ) : (
           <>
             {renderSection(t("missions.today"), today)}
@@ -118,6 +130,12 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
     textAlign: "center",
     marginTop: 40,
+  },
+  cacheHint: {
+    color: "#fbbf24",
+    fontSize: 12,
+    marginTop: 10,
+    marginBottom: 4,
   },
   searchBox: {
     flexDirection: "row",
