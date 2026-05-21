@@ -7,8 +7,11 @@ import { initializeSocket } from './sockets/socketHandler.js';
 import { startMQTT } from './mqtt/mqttBridge.js';
 import { startMissionReminderScheduler } from './schedulers/missionReminderScheduler.js';
 
+// src/index.js
 const PORT = process.env.PORT || 5000;
-
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+});
 async function startServer() {
   try {
     // Test database connection
