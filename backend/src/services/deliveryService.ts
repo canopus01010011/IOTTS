@@ -65,8 +65,18 @@ export class DeliveryService {
       });
 
       if (!mission) {
+        const existingMissions = await Mission.findAll({
+          where: { container_id: container.id },
+          attributes: ['id', 'status', 'driver_id', 'scheduled_start_date'],
+          order: [['scheduled_start_date', 'ASC']],
+        });
+        const details = existingMissions.length
+          ? existingMissions
+              .map((m) => `${m.id}: ${m.status}, conducteur=${m.driver_id}`)
+              .join(' | ')
+          : 'aucune mission assignée à ce conteneur';
         throw new Error(
-          'Aucune mission en attente pour ce conteneur. Vérifiez l\'assignation ou l\'horaire.',
+          `Aucune mission en attente pour le QR ${qr} (conteneur ${container.id}). Missions trouvées : ${details}.`,
         );
       }
       return mission;

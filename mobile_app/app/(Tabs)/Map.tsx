@@ -1,5 +1,5 @@
 import { Phone, Truck } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -21,6 +21,7 @@ import { useMissions } from "@/hooks/useMissions";
 const { width, height } = Dimensions.get("window");
 
 export default function MapScreen() {
+  const mapRef = useRef<MapView | null>(null);
   const { location, loading: locationLoading, enabled } = useLocation();
   const { activeMission } = useMissions();
   const { user } = useAuth();
@@ -34,6 +35,7 @@ export default function MapScreen() {
     hasPosition: hasIotPosition,
     battery: iotBattery,
     serial: iotSerial,
+    trackPoints,
   } = useLiveGps(containerId);
 
   const [distance, setDistance] = useState("");
@@ -57,6 +59,22 @@ export default function MapScreen() {
       ? { latitude: iotLat, longitude: iotLng }
       : null;
 
+  const trailCoordinates = useMemo(
+    () =>
+      trackPoints
+        .map((point) => ({
+          latitude: Number(point.latitude),
+          longitude: Number(point.longitude),
+        }))
+        .filter(
+          (point) =>
+            Number.isFinite(point.latitude) &&
+            Number.isFinite(point.longitude) &&
+            !(point.latitude === 0 && point.longitude === 0),
+        ),
+    [trackPoints],
+  );
+
   const contactPhone =
     user?.role === "driver"
       ? (activeMission?.raw as Record<string, any>)?.technician?.phone
@@ -67,6 +85,29 @@ export default function MapScreen() {
     !!location &&
     GOOGLE_API_KEY &&
     GOOGLE_API_KEY !== "YOUR_GOOGLE_API_KEY";
+
+  useEffect(() => {
+    if (!destination) return;
+
+    const points = [
+      ...trailCoordinates,
+      ...(iotCoordinate ? [iotCoordinate] : []),
+      destination,
+    ];
+
+    if (points.length > 1) {
+      mapRef.current?.fitToCoordinates(points, {
+        edgePadding: { top: 90, right: 70, bottom: 260, left: 70 },
+        animated: true,
+      });
+    }
+  }, [
+    destination?.latitude,
+    destination?.longitude,
+    iotCoordinate?.latitude,
+    iotCoordinate?.longitude,
+    trailCoordinates,
+  ]);
 
   if (locationLoading) {
     return (
@@ -107,7 +148,12 @@ export default function MapScreen() {
 
   return (
     <View style={styles.container}>
-      <MapView style={styles.map} region={region} showsUserLocation={enabled}>
+      <MapView
+        ref={mapRef}
+        style={styles.map}
+        initialRegion={region}
+        showsUserLocation={enabled}
+      >
         {location && <Marker coordinate={location} title="You" pinColor="#3b82f6" />}
 
         <Marker coordinate={destination} title={activeMission.site} pinColor="#22c55e" />
@@ -118,6 +164,14 @@ export default function MapScreen() {
               <Truck color="#fff" size={18} />
             </View>
           </Marker>
+        )}
+
+        {trailCoordinates.length >= 2 && (
+          <Polyline
+            coordinates={trailCoordinates}
+            strokeColor="#2563eb"
+            strokeWidth={5}
+          />
         )}
 
         {iotCoordinate && (

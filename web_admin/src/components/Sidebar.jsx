@@ -1,22 +1,24 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import logo from '../assets/logo.js'
+import { useLanguage } from '../i18n.jsx'
 
 const links = [
-  { to: '/dashboard',                label: 'Dashboard',         icon: '▣' },
-  { to: '/dashboard/missions',       label: 'Créer une mission', icon: '+' },
-  { to: '/dashboard/suivi',          label: 'Suivi missions',    icon: '◎' },
-  { to: '/dashboard/historique',     label: 'Historique',        icon: '⏱' },
-  { to: '/dashboard/rapports',       label: 'Rapports',          icon: '📋' },
-  { to: '/dashboard/create-user',    label: 'Créer utilisateur', icon: '👤' },
-  { to: '/dashboard/drivers',        label: 'Conducteurs',       icon: '🚛' },
-  { to: '/dashboard/technicians',    label: 'Techniciens',       icon: '🔧' },
-  { to: '/dashboard/sites',          label: 'Sites',             icon: '📍' },
-  { to: '/dashboard/containers',    label: 'Conteneurs',        icon: '📦' },
-  { to: '/dashboard/settings',       label: 'Paramètres',        icon: '⚙' },
+  { to: '/dashboard', labelKey: 'nav.dashboard', icon: 'D' },
+  { to: '/dashboard/missions', labelKey: 'nav.createMission', icon: '+' },
+  { to: '/dashboard/suivi', labelKey: 'nav.tracking', icon: 'M' },
+  { to: '/dashboard/historique', labelKey: 'nav.history', icon: 'H' },
+  { to: '/dashboard/rapports', labelKey: 'nav.reports', icon: 'R' },
+  { to: '/dashboard/create-user', labelKey: 'nav.createUser', icon: 'U' },
+  { to: '/dashboard/drivers', labelKey: 'nav.drivers', icon: 'C' },
+  { to: '/dashboard/technicians', labelKey: 'nav.technicians', icon: 'T' },
+  { to: '/dashboard/sites', labelKey: 'nav.sites', icon: 'S' },
+  { to: '/dashboard/containers', labelKey: 'nav.containers', icon: 'B' },
+  { to: '/dashboard/settings', labelKey: 'nav.settings', icon: 'P' },
 ]
 
 export default function Sidebar() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
 
   const logout = () => {
     localStorage.removeItem('token')
@@ -25,60 +27,92 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="w-52 min-h-screen flex flex-col"
-      style={{ background: '#080d1a', borderRight: '0.5px solid rgba(59,130,246,.15)' }}>
-
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-3"
-        style={{ borderBottom: '0.5px solid rgba(59,130,246,.15)' }}>
+    <aside
+      className="w-56 min-h-screen flex flex-col"
+      style={{
+        background: 'rgba(8,13,26,.96)',
+        borderRight: '1px solid var(--border)',
+        boxShadow: '10px 0 30px rgba(0,0,0,.18)',
+      }}
+    >
+      <div
+        className="flex items-center gap-3 px-4 py-4"
+        style={{ borderBottom: '1px solid var(--border)' }}
+      >
         <img
           src={`data:image/png;base64,${logo}`}
           alt="ErcTrac logo"
-          className="w-9 h-9 rounded-lg object-cover"
+          className="w-10 h-10 object-cover"
+          style={{ borderRadius: 8, border: '1px solid rgba(96,165,250,.24)' }}
         />
         <div>
-          <p className="text-sm font-medium leading-tight" style={{ color: '#e2e8f0' }}>
+          <p className="text-sm font-bold leading-tight" style={{ color: '#f8fafc' }}>
             Erc<span style={{ color: '#3b82f6' }}>Trac</span>
           </p>
-          <p className="text-xs" style={{ color: 'rgba(148,163,184,.4)' }}>Télécom Admin</p>
+          <p className="text-xs" style={{ color: 'rgba(148,163,184,.62)' }}>{t('app.admin')}</p>
         </div>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 py-3">
-        {links.map(link => (
+      <nav className="flex-1 py-3 px-3">
+        {links.map((link) => (
           <NavLink
             key={link.to}
             to={link.to}
             end={link.to === '/dashboard'}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-2.5 text-sm transition-all ${
+              `flex items-center gap-3 px-3 py-2.5 text-sm transition-all ${
                 isActive ? 'font-medium' : 'hover:opacity-80'
               }`
             }
-            style={({ isActive }) => isActive
-              ? {
-                  color: '#60a5fa',
-                  background: 'rgba(59,130,246,.1)',
-                  borderLeft: '2px solid #3b82f6',
-                  paddingLeft: '14px'
-                }
-              : { color: 'rgba(148,163,184,.6)' }
+            style={({ isActive }) =>
+              isActive
+                ? {
+                    color: '#f8fafc',
+                    background: 'rgba(59,130,246,.16)',
+                    border: '1px solid rgba(96,165,250,.24)',
+                    borderRadius: 8,
+                  }
+                : {
+                    color: 'rgba(148,163,184,.72)',
+                    border: '1px solid transparent',
+                    borderRadius: 8,
+                  }
             }
           >
-            <span style={{ fontSize: '13px', opacity: 0.7 }}>{link.icon}</span>
-            {link.label}
+            <span
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: 7,
+                background: 'rgba(148,163,184,.12)',
+                color: '#93c5fd',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 11,
+                fontWeight: 800,
+                flexShrink: 0,
+              }}
+            >
+              {link.icon}
+            </span>
+            {t(link.labelKey)}
           </NavLink>
         ))}
       </nav>
 
-      {/* Logout */}
       <button
         onClick={logout}
-        className="mx-4 mb-5 text-left text-sm py-2 px-1 transition-opacity hover:opacity-80"
-        style={{ color: 'rgba(148,163,184,.4)', background: 'none', border: 'none', cursor: 'pointer' }}
+        className="mx-3 mb-5 text-left text-sm py-2.5 px-3 transition-opacity hover:opacity-80"
+        style={{
+          color: 'rgba(248,250,252,.76)',
+          background: 'rgba(148,163,184,.1)',
+          border: '1px solid rgba(148,163,184,.14)',
+          borderRadius: 8,
+          cursor: 'pointer',
+        }}
       >
-        ⎋ Déconnexion
+        {t('nav.logout')}
       </button>
     </aside>
   )

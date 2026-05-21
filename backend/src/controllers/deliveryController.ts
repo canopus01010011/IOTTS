@@ -26,16 +26,32 @@ export class DeliveryController {
       res.json(result);
     } catch (error) {
       if (error instanceof Error) {
-        if (error.message.includes('not assigned')) {
+        if (
+          error.message.includes('not assigned') ||
+          error.message.includes('conducteur assigné') ||
+          error.message.includes('technicien assigné')
+        ) {
           return res.status(403).json({ error: error.message });
         }
-        if (error.message.includes('already confirmed')) {
+        if (
+          error.message.includes('already confirmed') ||
+          error.message.includes('déjà')
+        ) {
           return res.status(409).json({ error: error.message });
         }
-        if (error.message.includes('must confirm')) {
+        if (
+          error.message.includes('must confirm') ||
+          error.message.includes('doit') ||
+          error.message.includes('Aucune mission en attente') ||
+          error.message.includes('Scannez')
+        ) {
           return res.status(400).json({ error: error.message });
         }
-        if (error.message.includes('Invalid')) {
+        if (
+          error.message.includes('Invalid') ||
+          error.message.includes('not found') ||
+          error.message.includes('introuvable')
+        ) {
           return res.status(404).json({ error: error.message });
         }
       }

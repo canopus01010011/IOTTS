@@ -1,5 +1,6 @@
 import MissionCard from "@/components/UI/MissionCard";
 import { colors } from "@/constants/theme";
+import { useLanguage } from "@/context/LanguageContext";
 import { useMissions } from "@/hooks/useMissions";
 import type { MissionCardData } from "@/app/utils/missionMapper";
 import { Search } from "lucide-react-native";
@@ -16,6 +17,7 @@ import {
 
 export default function MissionsScreen() {
   const { missions, loading } = useMissions();
+  const { t } = useLanguage();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
 
@@ -56,7 +58,7 @@ export default function MissionsScreen() {
         <View style={styles.searchBox}>
           <Search size={18} color="#9ca3af" />
           <TextInput
-            placeholder="Search missions..."
+            placeholder={t("missions.search")}
             placeholderTextColor="#6b7280"
             style={styles.input}
             value={search}
@@ -74,7 +76,12 @@ export default function MissionsScreen() {
               <Text
                 style={[styles.filterText, filter === f && { color: "white" }]}
               >
-                {f}
+                {{
+                  All: t("missions.all"),
+                  Today: t("missions.today"),
+                  Completed: t("missions.completed"),
+                  Pending: t("missions.pending"),
+                }[f]}
               </Text>
             </Pressable>
           ))}
@@ -85,11 +92,11 @@ export default function MissionsScreen() {
             <ActivityIndicator size="large" color={colors.primary} />
           </View>
         ) : filtered.length === 0 ? (
-          <Text style={styles.empty}>No missions match your filters.</Text>
+          <Text style={styles.empty}>{t("missions.empty")}</Text>
         ) : (
           <>
-            {renderSection("Today", today)}
-            {renderSection("Upcoming & Other", others)}
+            {renderSection(t("missions.today"), today)}
+            {renderSection(t("missions.upcoming"), others)}
           </>
         )}
       </ScrollView>

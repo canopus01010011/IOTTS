@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import Sidebar from '../components/Sidebar'
 import TopBar  from '../components/TopBar'
+import { useLanguage } from '../i18n.jsx'
 
 const MISSION_STATUS_LABEL = {
   pending: 'En attente',
@@ -66,6 +67,7 @@ function formatReportRow(report) {
 }
 
 export default function Rapports() {
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const [rapports, setRapports] = useState([])
   const [summary, setSummary] = useState(null)
@@ -141,30 +143,23 @@ export default function Rapports() {
   }
 
   return (
-    <div className="flex min-h-screen" style={{ background: '#0a0f1e' }}>
+    <div className="flex min-h-screen admin-page">
       <Sidebar />
       <div className="flex-1 flex flex-col">
-        <TopBar title="Rapports techniciens (soumission finale)" />
-        <main className="flex-1 p-6">
+        <TopBar title={t('reports.title')} />
+        <main className="flex-1 admin-main">
 
           <div className="grid grid-cols-3 gap-3 mb-5">
             {[
-              { label: 'Rapports soumis (fin de mission)', value: stats.total, color: '#e2e8f0' },
-              { label: 'Missions validées', value: stats.valide, color: '#4ade80' },
-              { label: 'En attente validation', value: stats.attend, color: '#fbbf24' },
+              { label: t('reports.submitted'), value: stats.total, color: '#e2e8f0' },
+              { label: t('reports.validated'), value: stats.valide, color: '#4ade80' },
+              { label: t('reports.awaiting'), value: stats.attend, color: '#fbbf24' },
             ].map((s) => (
-              <div
-                key={s.label}
-                className="rounded-xl p-4"
-                style={{
-                  background: '#111827',
-                  border: '0.5px solid rgba(59,130,246,.15)',
-                }}
-              >
-                <p className="text-xl font-medium" style={{ color: s.color }}>
+              <div key={s.label} className="admin-card" style={{ padding: 16 }}>
+                <p className="text-xl font-bold" style={{ color: s.color }}>
                   {s.value}
                 </p>
-                <p className="text-xs mt-1" style={{ color: 'rgba(148,163,184,.5)' }}>
+                <p className="text-xs mt-1" style={{ color: 'rgba(148,163,184,.62)' }}>
                   {s.label}
                 </p>
               </div>
@@ -204,7 +199,7 @@ export default function Rapports() {
                 setSearch(e.target.value)
                 setPage(1)
               }}
-              placeholder="Rechercher…"
+              placeholder={t('reports.search')}
               style={{ ...inp, marginLeft: 'auto' }}
             />
           </div>
@@ -222,13 +217,7 @@ export default function Rapports() {
             </p>
           )}
 
-          <div
-            className="rounded-xl overflow-hidden"
-            style={{
-              background: '#111827',
-              border: '0.5px solid rgba(59,130,246,.15)',
-            }}
-          >
+          <div className="admin-card admin-table">
             <div
               style={{
                 display: 'grid',
@@ -260,7 +249,7 @@ export default function Rapports() {
                 className="text-center py-10 text-sm"
                 style={{ color: 'rgba(148,163,184,.4)' }}
               >
-                Aucun rapport trouvé.
+                {t('reports.empty')}
               </p>
             ) : (
               rapports.map((r, i) => (
@@ -272,9 +261,10 @@ export default function Rapports() {
                     padding: '11px 16px',
                     fontSize: 11,
                     color: '#cbd5e1',
-                    borderBottom: '0.5px solid rgba(255,255,255,.03)',
+                    borderBottom: '1px solid rgba(255,255,255,.04)',
                     alignItems: 'center',
                   }}
+                  className="admin-table-row"
                 >
                   <span style={{ color: '#60a5fa', fontWeight: 500 }}>{r.reference}</span>
 
@@ -349,17 +339,15 @@ export default function Rapports() {
                   <button
                     type="button"
                     onClick={() => navigate(`/dashboard/rapports/${r.id}`)}
+                    className="admin-secondary-btn"
                     style={{
-                      background: 'rgba(59,130,246,.1)',
-                      border: '0.5px solid rgba(59,130,246,.3)',
-                      borderRadius: 6,
-                      padding: '4px 10px',
                       fontSize: 10,
                       color: '#60a5fa',
-                      cursor: 'pointer',
+                      minHeight: 30,
+                      padding: '4px 10px',
                     }}
                   >
-                    Voir détail
+                    {t('reports.detail')}
                   </button>
                 </div>
               ))

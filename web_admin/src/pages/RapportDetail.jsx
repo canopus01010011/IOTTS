@@ -88,7 +88,7 @@ export default function RapportDetail() {
     )
   }
 
-  if (error || !data?.mission || !report) {
+  if (error || !data?.mission || !data?.report) {
     return (
       <div className="flex min-h-screen" style={{ background: '#0a0f1e' }}>
         <Sidebar />

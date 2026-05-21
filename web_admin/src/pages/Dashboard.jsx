@@ -1,19 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../services/api'
 import { formatEquipmentList, formatDateTime } from '../utils/missionFormat'
 import Sidebar from '../components/Sidebar'
-import TopBar  from '../components/TopBar'
+import TopBar from '../components/TopBar'
+import { useLanguage } from '../i18n.jsx'
 
 const badgeStyle = {
-  'En cours':   { background: 'rgba(59,130,246,.12)', color: '#60a5fa' },
-  'En attente': { background: 'rgba(234,179,8,.1)',   color: '#fbbf24' },
-  'Incident':   { background: 'rgba(239,68,68,.12)',  color: '#f87171' },
-  'Annulé':     { background: 'rgba(148,163,184,.1)', color: '#94a3b8' },
-  'Terminé':    { background: 'rgba(34,197,94,.1)',   color: '#4ade80' },
+  'En cours': { background: 'rgba(59,130,246,.14)', color: '#60a5fa' },
+  'En attente': { background: 'rgba(234,179,8,.12)', color: '#fbbf24' },
+  Incident: { background: 'rgba(239,68,68,.12)', color: '#f87171' },
+  Annule: { background: 'rgba(148,163,184,.12)', color: '#94a3b8' },
+  Termine: { background: 'rgba(34,197,94,.12)', color: '#4ade80' },
 }
 
-const MOCK_STATS = {
+const emptyStats = {
   totalMissions: 0,
   inProgressMissions: 0,
   completedMissions: 0,
@@ -22,148 +23,160 @@ const MOCK_STATS = {
   totalDrivers: 0,
 }
 
-const MOCK_RECENTES = []
-
 const statusMap = {
   pending: 'En attente',
   'in-progress': 'En cours',
-  completed: 'Terminé',
+  completed: 'Termine',
 }
 
-const formatMission = (m) => ({
-  id: m.id,
-  ref: m.id,
-  site: m.Site?.name || m.site_id || 'N/A',
-  driver: m.driver?.full_name || 'N/A',
-  equip: formatEquipmentList(m.equipment_list),
-  date: formatDateTime(m.scheduled_start_date),
-  statut: statusMap[m.status] || m.status,
+const formatMission = (mission) => ({
+  id: mission.id,
+  ref: mission.id,
+  site: mission.Site?.name || mission.site_id || 'N/A',
+  driver: mission.driver?.full_name || 'N/A',
+  equip: formatEquipmentList(mission.equipment_list),
+  date: formatDateTime(mission.scheduled_start_date),
+  statut: statusMap[mission.status] || mission.status,
 })
 
 export default function Dashboard() {
-  const [stats,    setStats]    = useState(MOCK_STATS)
+  const { t } = useLanguage()
+  const [stats, setStats] = useState(emptyStats)
   const [missions, setMissions] = useState([])
 
   useEffect(() => {
     api.get('/reports/stats/dashboard')
-      .then((r) => setStats(r.data.data || r.data || MOCK_STATS))
-      .catch(() => setStats(MOCK_STATS))
+      .then((r) => setStats(r.data.data || r.data || emptyStats))
+      .catch(() => setStats(emptyStats))
 
     api.get('/missions?limit=5')
       .then((r) => setMissions((r.data.missions || []).map(formatMission)))
-      .catch(() => setMissions(MOCK_RECENTES))
+      .catch(() => setMissions([]))
   }, [])
 
   const cards = [
-    { label: 'Missions totales',      value: stats.totalMissions,     color: '#e2e8f0' },
-    { label: 'En cours',              value: stats.inProgressMissions, color: '#60a5fa' },
-    { label: 'Terminées',             value: stats.completedMissions,  color: '#4ade80' },
-    { label: 'En attente',            value: stats.pendingMissions,    color: '#fbbf24' },
-    { label: 'Techniciens',           value: stats.totalTechnicians,   color: '#a78bfa', to: '/dashboard/technicians' },
-    { label: 'Conducteurs',           value: stats.totalDrivers,       color: '#94a3b8', to: '/dashboard/drivers' },
+    { label: t('dashboard.totalMissions'), value: stats.totalMissions, color: '#f8fafc' },
+    { label: t('dashboard.inProgress'), value: stats.inProgressMissions, color: '#60a5fa' },
+    { label: t('dashboard.completed'), value: stats.completedMissions, color: '#4ade80' },
+    { label: t('dashboard.pending'), value: stats.pendingMissions, color: '#fbbf24' },
+    { label: t('nav.technicians'), value: stats.totalTechnicians, color: '#93c5fd', to: '/dashboard/technicians' },
+    { label: t('nav.drivers'), value: stats.totalDrivers, color: '#94a3b8', to: '/dashboard/drivers' },
   ]
 
   return (
-    <div className="flex min-h-screen" style={{ background: '#0a0f1e' }}>
+    <div className="flex min-h-screen admin-page">
       <Sidebar />
       <div className="flex-1 flex flex-col">
-        <TopBar title="Vue d'ensemble" />
-        <main className="flex-1 p-6">
-
-          {/* Stat cards */}
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 12, marginBottom: 24
-          }}>
-            {cards.map(c => {
-              const inner = (
+        <TopBar title={t('dashboard.title')} />
+        <main className="flex-1 admin-main">
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+              gap: 12,
+              marginBottom: 22,
+            }}
+          >
+            {cards.map((card) => {
+              const content = (
                 <>
-                  <p style={{ fontSize: 26, fontWeight: 500, color: c.color }}>{c.value}</p>
-                  <p style={{ fontSize: 12, color: 'rgba(148,163,184,.5)', marginTop: 4 }}>{c.label}</p>
+                  <p style={{ fontSize: 28, fontWeight: 800, color: card.color, lineHeight: 1 }}>
+                    {card.value}
+                  </p>
+                  <p className="admin-subtle" style={{ marginTop: 8 }}>{card.label}</p>
                 </>
               )
-              const cardStyle = {
-                background: '#111827',
-                border: '0.5px solid rgba(59,130,246,.15)',
-                borderRadius: 12,
+              const style = {
                 padding: '18px 20px',
                 textDecoration: 'none',
                 display: 'block',
-                cursor: c.to ? 'pointer' : 'default',
-                transition: 'border-color .15s',
+                cursor: card.to ? 'pointer' : 'default',
               }
-              return c.to ? (
-                <Link key={c.label} to={c.to} style={cardStyle}>
-                  {inner}
+              return card.to ? (
+                <Link key={card.label} to={card.to} className="admin-card admin-card-hover" style={style}>
+                  {content}
                 </Link>
               ) : (
-                <div key={c.label} style={cardStyle}>
-                  {inner}
+                <div key={card.label} className="admin-card" style={style}>
+                  {content}
                 </div>
               )
             })}
           </div>
 
-          {/* Missions récentes */}
-          <div style={{
-            background: '#111827',
-            border: '0.5px solid rgba(59,130,246,.15)',
-            borderRadius: 12, overflow: 'hidden'
-          }}>
-            <div style={{
-              padding: '14px 20px',
-              borderBottom: '0.5px solid rgba(59,130,246,.1)',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-            }}>
-              <p style={{ fontSize: 14, fontWeight: 500, color: '#e2e8f0' }}>
-                Missions récentes
-              </p>
-              <span style={{ fontSize: 11, color: 'rgba(148,163,184,.4)' }}>
-                5 dernières
-              </span>
+          <div className="admin-card admin-table">
+            <div
+              style={{
+                padding: '15px 20px',
+                borderBottom: '1px solid rgba(59,130,246,.12)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <p className="admin-section-title">{t('dashboard.recentMissions')}</p>
+              <span className="admin-subtle">{t('dashboard.lastFive')}</span>
             </div>
 
-            {/* En-tête table */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '.7fr 1.3fr 1fr 1.4fr .8fr .9fr',
-              padding: '8px 20px', fontSize: 10,
-              color: 'rgba(99,179,255,.4)',
-              letterSpacing: '.05em', textTransform: 'uppercase',
-              borderBottom: '0.5px solid rgba(59,130,246,.08)'
-            }}>
-              {['Réf.', 'Site', 'Driver', 'Équipement', 'Date', 'Statut'].map(h => (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '.7fr 1.3fr 1fr 1.4fr .8fr .9fr',
+                padding: '9px 20px',
+                fontSize: 10,
+                color: 'rgba(99,179,255,.54)',
+                textTransform: 'uppercase',
+                borderBottom: '1px solid rgba(59,130,246,.08)',
+              }}
+            >
+              {[t('dashboard.ref'), t('dashboard.site'), t('dashboard.driver'), t('dashboard.equipment'), t('dashboard.date'), t('dashboard.status')].map((h) => (
                 <span key={h}>{h}</span>
               ))}
             </div>
 
-            {/* Lignes */}
-            {missions.map(m => (
-              <div key={m.id} style={{
-                display: 'grid',
-                gridTemplateColumns: '.7fr 1.3fr 1fr 1.4fr .8fr .9fr',
-                padding: '11px 20px', fontSize: 12, color: '#cbd5e1',
-                borderBottom: '0.5px solid rgba(255,255,255,.03)',
-                alignItems: 'center'
-              }}>
-                <span style={{ color: '#60a5fa', fontWeight: 500 }}>{m.ref}</span>
-                <span>{m.site}</span>
-                <span style={{ color: 'rgba(148,163,184,.7)' }}>{m.driver}</span>
-                <span style={{ color: 'rgba(148,163,184,.5)', fontSize: 11 }}>{m.equip}</span>
-                <span style={{ color: 'rgba(148,163,184,.45)', fontSize: 11 }}>{m.date}</span>
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 4,
-                  padding: '2px 8px', borderRadius: 20,
-                  fontSize: 10, fontWeight: 500,
-                  ...badgeStyle[m.statut]
-                }}>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'currentColor' }} />
-                  {m.statut}
-                </span>
-              </div>
-            ))}
+            {missions.length === 0 ? (
+              <p className="admin-subtle" style={{ padding: 24, textAlign: 'center' }}>
+                {t('dashboard.noRecent')}
+              </p>
+            ) : (
+              missions.map((mission) => (
+                <div
+                  key={mission.id}
+                  className="admin-table-row"
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '.7fr 1.3fr 1fr 1.4fr .8fr .9fr',
+                    padding: '12px 20px',
+                    fontSize: 12,
+                    color: '#cbd5e1',
+                    borderBottom: '1px solid rgba(255,255,255,.04)',
+                    alignItems: 'center',
+                  }}
+                >
+                  <span style={{ color: '#60a5fa', fontWeight: 800 }}>{mission.ref}</span>
+                  <span>{mission.site}</span>
+                  <span style={{ color: 'rgba(148,163,184,.78)' }}>{mission.driver}</span>
+                  <span style={{ color: 'rgba(148,163,184,.64)', fontSize: 11 }}>{mission.equip}</span>
+                  <span style={{ color: 'rgba(148,163,184,.55)', fontSize: 11 }}>{mission.date}</span>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '3px 9px',
+                      borderRadius: 999,
+                      fontSize: 10,
+                      fontWeight: 800,
+                      ...(badgeStyle[mission.statut] || {}),
+                    }}
+                  >
+                    <span className="status-dot" />
+                    {mission.statut}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
-
         </main>
       </div>
     </div>

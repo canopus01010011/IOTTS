@@ -1,5 +1,6 @@
 import { Gear } from "@/components/UI/Gear";
 import { colors } from "@/constants/theme";
+import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useMissions } from "@/hooks/useMissions";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -28,6 +29,7 @@ const { width, height } = Dimensions.get("window");
 
 export default function Dashboard() {
   const router = useRouter();
+  const { t, isRTL } = useLanguage();
   const { user } = useAuth();
   const { missions, loading, activeMissions, completedMissions } = useMissions();
   const { unreadCount: notifications } = useNotifications();
@@ -54,7 +56,7 @@ export default function Dashboard() {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.title}>Welcome Back</Text>
+            <Text style={[styles.title, isRTL && styles.rtlText]}>{t("home.welcome")}</Text>
             <Text style={styles.subtitle}>{greeting}</Text>
           </View>
 
@@ -74,23 +76,23 @@ export default function Dashboard() {
 
         <View style={styles.statsRow}>
           <StatCard
-            label="Active"
+            label={t("home.active")}
             value={String(activeMissions.length)}
             icon={<ClipboardList size={20} color={colors.primary} />}
           />
           <StatCard
-            label="Completed"
+            label={t("home.completed")}
             value={String(completedMissions.length)}
             icon={<CheckCircle2 size={20} color={colors.primary} />}
           />
         </View>
 
-        <Text style={styles.sectionTitle}>Active Missions</Text>
+        <Text style={[styles.sectionTitle, isRTL && styles.rtlText]}>{t("home.activeMissions")}</Text>
 
         {loading ? (
-          <Text style={styles.loadingText}>Loading missions...</Text>
+          <Text style={styles.loadingText}>{t("common.loadingMissions")}</Text>
         ) : activeMissions.length === 0 ? (
-          <Text style={styles.loadingText}>No missions available.</Text>
+          <Text style={styles.loadingText}>{t("common.noMissions")}</Text>
         ) : (
           activeMissions.map((m) => (
               <Pressable
@@ -122,7 +124,7 @@ export default function Dashboard() {
 
                 <View style={styles.missionRow}>
                   <PackageIcon size={16} color="#9ca3af" />
-                  <Text style={styles.missionDetail}>{m.items} Items</Text>
+                  <Text style={styles.missionDetail}>{m.items} {t("home.items")}</Text>
                 </View>
 
                 <View
@@ -145,7 +147,13 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ label, value, icon }) {
+type StatCardProps = {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+};
+
+function StatCard({ label, value, icon }: StatCardProps) {
   return (
     <View style={styles.statCard}>
       {icon}
@@ -314,5 +322,8 @@ const styles = StyleSheet.create({
     color: "#9ca3af",
     textAlign: "center",
     marginTop: 20,
+  },
+  rtlText: {
+    textAlign: "right",
   },
 });
