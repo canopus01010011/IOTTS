@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
+import AnimatedBackground from '../components/AnimatedBackground.jsx'
 import BrandLogo from '../components/BrandLogo.jsx'
 import LanguageSelect from '../components/LanguageSelect.jsx'
 import { useLanguage } from '../i18n.jsx'
@@ -33,58 +34,33 @@ export default function Login() {
       localStorage.setItem('userRole', 'admin')
       navigate('/dashboard')
     } catch (err) {
-      setError(
-        err?.response?.data?.error ||
-        err?.message ||
-        t('login.invalid'),
-      )
+      setError(err?.response?.data?.error || err?.message || t('login.invalid'))
     } finally {
       setLoading(false)
     }
   }
 
-  const inputStyle = {
-    width: '100%',
-    background: 'var(--surface-2)',
-    border: '1px solid var(--border)',
-    borderRadius: 12,
-    padding: '12px 14px',
-    fontSize: 14,
-    color: '#f8fafc',
-    outline: 'none',
-  }
-
-  const labelStyle = {
-    display: 'block',
-    fontSize: 11,
-    fontWeight: 600,
-    color: 'rgba(139, 164, 190, 0.9)',
-    marginBottom: 6,
-    textTransform: 'uppercase',
-    letterSpacing: '0.04em',
-  }
-
   return (
-    <div
-      className="admin-page"
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px 16px',
-      }}
-    >
-      <div style={{ marginBottom: 32 }}>
+    <div className="admin-page login-wrap">
+      <AnimatedBackground variant="login" />
+
+      <div className="login-logo">
         <BrandLogo size={56} subtitle={t('app.admin')} />
       </div>
 
-      <div className="admin-card" style={{ width: '100%', maxWidth: 400, padding: 32 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', marginBottom: 6 }}>
+      <div className="admin-card login-card">
+        <h2
+          style={{
+            fontSize: 24,
+            fontWeight: 800,
+            color: '#f8fafc',
+            marginBottom: 8,
+            letterSpacing: '-0.02em',
+          }}
+        >
           {t('login.title')}
         </h2>
-        <p style={{ fontSize: 13, color: 'rgba(139, 164, 190, 0.85)', marginBottom: 22 }}>
+        <p className="admin-subtle" style={{ marginBottom: 22 }}>
           {t('login.subtitle')}
         </p>
         <div style={{ marginBottom: 20 }}>
@@ -92,39 +68,64 @@ export default function Login() {
         </div>
 
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          <div>
-            <label style={labelStyle}>{t('login.email')}</label>
+          <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: 11,
+                fontWeight: 700,
+                color: 'rgba(139, 164, 190, 0.9)',
+                marginBottom: 8,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              {t('login.email')}
+            </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@ericsson.com"
               required
-              style={inputStyle}
+              style={{ width: '100%', padding: '13px 16px', fontSize: 14 }}
             />
           </div>
 
-          <div>
-            <label style={labelStyle}>{t('login.password')}</label>
+          <div className="animate-fade-in-up" style={{ animationDelay: '0.28s' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: 11,
+                fontWeight: 700,
+                color: 'rgba(139, 164, 190, 0.9)',
+                marginBottom: 8,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+              }}
+            >
+              {t('login.password')}
+            </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={t('login.passwordPlaceholder')}
               required
-              style={inputStyle}
+              style={{ width: '100%', padding: '13px 16px', fontSize: 14 }}
             />
           </div>
 
           {error && (
             <p
+              className="animate-scale-in"
               style={{
                 fontSize: 12,
                 color: '#f87171',
-                background: 'rgba(239,68,68,.08)',
-                border: '1px solid rgba(239,68,68,.2)',
-                borderRadius: 10,
-                padding: '10px 12px',
+                background: 'rgba(239,68,68,.1)',
+                border: '1px solid rgba(239,68,68,.25)',
+                borderRadius: 12,
+                padding: '12px 14px',
               }}
             >
               {error}
@@ -134,14 +135,14 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="admin-primary-btn"
+            className="admin-primary-btn animate-fade-in-up"
             style={{
-              opacity: loading ? 0.6 : 1,
-              marginTop: 4,
+              opacity: loading ? 0.65 : 1,
+              marginTop: 8,
               width: '100%',
-              minHeight: 44,
-              borderRadius: 12,
-              fontSize: 14,
+              minHeight: 48,
+              fontSize: 15,
+              animationDelay: '0.35s',
             }}
           >
             {loading ? t('login.loading') : t('login.submit')}

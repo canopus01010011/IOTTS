@@ -6,71 +6,59 @@ export default function TopBar({ title }) {
   const { t } = useLanguage()
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 24px',
-        height: 64,
-        background: 'rgba(8,13,26,.88)',
-        borderBottom: '1px solid var(--border)',
-        backdropFilter: 'blur(14px)',
-      }}
-    >
+    <header className="admin-topbar">
       <div>
-        <p style={{ fontSize: 11, color: 'rgba(148,163,184,.58)', marginBottom: 3 }}>
-          {t('app.control')}
-        </p>
-        <h1 style={{ fontSize: 17, fontWeight: 800, color: '#f8fafc', margin: 0 }}>
-          {title}
-        </h1>
+        <p className="admin-topbar__breadcrumb">{t('app.control')}</p>
+        <h1 className="admin-topbar__title">{title}</h1>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <span className="admin-badge-live">Live</span>
         <LanguageSelect compact />
-
         <div
           style={{
-            padding: '4px 8px',
-            background: 'rgba(15,23,42,.7)',
+            padding: '4px 10px',
+            background: 'rgba(15,23,42,.6)',
             border: '1px solid var(--border)',
-            borderRadius: 10,
+            borderRadius: 12,
           }}
         >
           <BrandLogo size={32} showText />
         </div>
-
         <div
+          className="admin-card-hover"
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 9,
-            padding: '6px 8px 6px 11px',
-            background: 'rgba(34,197,94,.08)',
-            border: '1px solid rgba(34,197,94,.18)',
-            borderRadius: 8,
+            gap: 10,
+            padding: '8px 12px 8px 14px',
+            background: 'rgba(30, 168, 212, 0.08)',
+            border: '1px solid rgba(30, 168, 212, 0.22)',
+            borderRadius: 12,
           }}
         >
-          <span style={{ fontSize: 12, color: 'rgba(248,250,252,.76)' }}>{t('common.admin')}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(248,250,252,.85)' }}>
+            {t('common.admin')}
+          </span>
           <div
             style={{
-              width: 30,
-              height: 30,
+              width: 34,
+              height: 34,
               borderRadius: '50%',
-              background: 'var(--accent)',
+              background: 'linear-gradient(135deg, #1ea8d4, #38bdf8)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 800,
               color: '#fff',
+              boxShadow: '0 4px 16px rgba(30, 168, 212, 0.4)',
             }}
           >
             A
           </div>
         </div>
       </div>
-    </div>
+    </header>
   )
 }

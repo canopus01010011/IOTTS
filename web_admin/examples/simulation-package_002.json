@@ -1,0 +1,57 @@
+{
+  "simulation_id": "SIM-PKG002-MEFTAH",
+  "description": "Simulation IoT Package 002 - Meftah Route (OS_Meftah)",
+  "status": "active",
+  "gps_device": {
+    "device_id": "package_002",
+    "device_serial_number": "package_002",
+    "device_status": "inactive",
+    "battery_level": 100
+  },
+  "container": {
+    "container_id": "CTR-IOT-002",
+    "qr_code": "CTR-IOT-002",
+    "capacity": 120,
+    "status": "available"
+  },
+  "route": {
+    "name": "OS-Meftah",
+    "gpx_file": "iot_system/OS_Meftah.gpx",
+    "reference": "MSN-IOT-PKG002-MEFTAH"
+  },
+  "warehouse_departure": {
+    "name": "Entrepôt Oued Smar",
+    "address": "Oued Smar, Alger",
+    "latitude": 36.706686,
+    "longitude": 3.167203,
+    "label": "Point de départ (premier point GPX)"
+  },
+  "delivery_site": {
+    "name": "Livraison Meftah — Fin de parcours GPX",
+    "address": "Meftah, Alger",
+    "latitude": 36.62046,
+    "longitude": 3.222544,
+    "label": "Destination livraison"
+  },
+  "mqtt_topic": "ericsson/sites/site_alger/package_002/gps",
+  "mqtt_simulation_start_topic": "ericsson/simulation/start/package_002",
+  "simulation_flow": {
+    "step_1": "Admin crée mission avec conteneur CTR-IOT-002",
+    "step_2": "Système assigne conducteur et technicien",
+    "step_3": "Conducteur scanne QR mission (MIS-…) à l'entrepôt",
+    "step_4": "Backend valide: conducteur assigné + statut pending",
+    "step_5": "Backend publie MQTT: ericsson/simulation/start/package_002",
+    "step_6": "Simulateur Python reçoit trigger et démarre depuis point départ (36.706686, 3.167203)",
+    "step_7": "Points GPS publiés en continu toutes les 10 secondes (configurable)",
+    "step_8": "Batterie décrémente graduellement (1% toutes les 3 points)",
+    "step_9": "Technicien scanne QR mission sur site de livraison",
+    "step_10": "Simulation termine, statut mission = 'completed'"
+  },
+  "notes": [
+    "Simulation démarre UNIQUEMENT via scan QR du conducteur assigné",
+    "Aucun scan ne peut déclencher une simulation si le statut n'est pas 'pending'",
+    "Tous les GPX points sont publiés (départ à destination)",
+    "La simulation peut être arrêtée avec Ctrl+C dans le terminal Python",
+    "Timestamps en UTC ISO 8601"
+  ]
+}

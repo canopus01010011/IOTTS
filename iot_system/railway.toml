@@ -1,0 +1,10 @@
+# Railway — one IoT service (routes API + GPS simulator)
+# Root Directory = iot_system
+
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "python start.py"
+healthcheckPath = "/health"
+restartPolicyType = "ON_FAILURE"

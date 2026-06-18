@@ -1,8 +1,16 @@
 import mqtt from 'mqtt';
 import { GPSDevice } from '../models/index.js';
 import { mqttConfig } from '../config/mqttConfig.js';
-import { WAREHOUSE, MQTT_SIMULATION_START_PREFIX } from '../constants/warehouse.js';
+import {
+  WAREHOUSE,
+  MQTT_SIMULATION_START_PREFIX,
+  MQTT_SIMULATION_STOP_PREFIX,
+} from '../constants/warehouse.js';
 import { GPSService } from './gpsService.js';
+import {
+  startBackendRouteSimulation,
+  stopBackendRouteSimulation,
+} from './backendRouteSimulation.js';
 
 let publisher: mqtt.MqttClient | null = null;
 
@@ -64,15 +72,15 @@ export async function startMissionGpsSimulation(missionId: string, containerId: 
   }
 
   const deviceSerial = gps.device_serial_number;
-  
+
   try {
-    // Ensure warehouse starting position is saved before publishing simulation start
     await seedWarehouseDeparture(deviceSerial);
-    console.log(`📍 Warehouse departure position seeded for ${deviceSerial} at ${WAREHOUSE.latitude}, ${WAREHOUSE.longitude}`);
-    
-    // Small delay to ensure database write is complete
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+    console.log(
+      `📍 Warehouse departure seeded for ${deviceSerial} (${WAREHOUSE.latitude}, ${WAREHOUSE.longitude})`,
+    );
+
+    await startBackendRouteSimulation(missionId, deviceSerial);
+
     const client = await getPublisher();
     const topic = `${MQTT_SIMULATION_START_PREFIX}/${deviceSerial}`;
     const payload = JSON.stringify({ missionId, action: 'start', warehouse: WAREHOUSE.name });
@@ -84,9 +92,37 @@ export async function startMissionGpsSimulation(missionId: string, containerId: 
     });
     console.log(`📡 Simulation start published → ${topic} (mission ${missionId})`);
   } catch (err) {
-    console.error(
-      `[simulation] MQTT publish failed for ${deviceSerial}. Is gps_simulator.py --listen running?`,
+    console.warn(
+      `[simulation] MQTT start publish failed for ${deviceSerial} (backend sim still running):`,
       err,
     );
+  }
+}
+
+/** Stop IoT GPS simulation when the mission is completed on site. */
+export async function stopMissionGpsSimulation(missionId: string, containerId: string) {
+  const gps = await GPSDevice.findOne({ where: { container_id: containerId } });
+  if (!gps) {
+    console.warn(`[simulation] No GPS device for container ${containerId} (mission ${missionId})`);
+    return;
+  }
+
+  const deviceSerial = gps.device_serial_number;
+
+  stopBackendRouteSimulation(deviceSerial);
+
+  try {
+    const client = await getPublisher();
+    const topic = `${MQTT_SIMULATION_STOP_PREFIX}/${deviceSerial}`;
+    const payload = JSON.stringify({ missionId, action: 'stop' });
+    await new Promise<void>((resolve, reject) => {
+      client.publish(topic, payload, { qos: 1 }, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+    console.log(`📡 Simulation stop published → ${topic} (mission ${missionId})`);
+  } catch (err) {
+    console.error(`[simulation] MQTT stop publish failed for ${deviceSerial}:`, err);
   }
 }

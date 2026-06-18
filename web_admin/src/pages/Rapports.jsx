@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
-import Sidebar from '../components/Sidebar'
-import TopBar  from '../components/TopBar'
+import DashboardLayout from '../components/DashboardLayout'
+import StatCard from '../components/StatCard'
 import { useLanguage } from '../i18n.jsx'
 
 const MISSION_STATUS_LABEL = {
@@ -143,26 +143,14 @@ export default function Rapports() {
   }
 
   return (
-    <div className="flex min-h-screen admin-page">
-      <Sidebar />
-      <div className="flex-1 flex flex-col">
-        <TopBar title={t('reports.title')} />
-        <main className="flex-1 admin-main">
-
-          <div className="grid grid-cols-3 gap-3 mb-5">
+    <DashboardLayout title={t('reports.title')}>
+          <div className="stat-grid stagger-children" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
             {[
-              { label: t('reports.submitted'), value: stats.total, color: '#e2e8f0' },
-              { label: t('reports.validated'), value: stats.valide, color: '#4ade80' },
-              { label: t('reports.awaiting'), value: stats.attend, color: '#fbbf24' },
-            ].map((s) => (
-              <div key={s.label} className="admin-card" style={{ padding: 16 }}>
-                <p className="text-xl font-bold" style={{ color: s.color }}>
-                  {s.value}
-                </p>
-                <p className="text-xs mt-1" style={{ color: 'rgba(148,163,184,.62)' }}>
-                  {s.label}
-                </p>
-              </div>
+              { label: t('reports.submitted'), value: stats.total, color: '#e2e8f0', icon: '▣' },
+              { label: t('reports.validated'), value: stats.valide, color: '#4ade80', icon: '✓' },
+              { label: t('reports.awaiting'), value: stats.attend, color: '#fbbf24', icon: '◷' },
+            ].map((s, i) => (
+              <StatCard key={s.label} {...s} delay={i * 60} />
             ))}
           </div>
 
@@ -378,8 +366,6 @@ export default function Rapports() {
               ))}
             </div>
           )}
-        </main>
-      </div>
-    </div>
+    </DashboardLayout>
   )
 }

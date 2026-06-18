@@ -86,7 +86,7 @@ export class MissionService {
 
   static async getAllMissions(query: any, userRole: string, userId: string) {
     const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 10;
+    const limit = parseInt(query.limit) || 50;
     const offset = (page - 1) * limit;
     const where: any = {};
 

@@ -9,6 +9,7 @@ import {
 } from "@/app/utils/missionMapper";
 import { isNetworkError } from "@/app/utils/networkError";
 import { useOffline } from "@/context/OfflineContext";
+import { subscribeMissionRefresh } from "@/app/utils/missionRefresh";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export function useMissions() {
@@ -61,6 +62,12 @@ export function useMissions() {
       void loadMissions();
     });
   }, [registerOnReconnect, loadMissions]);
+
+  useEffect(() => {
+    return subscribeMissionRefresh(() => {
+      void loadMissions();
+    });
+  }, [loadMissions]);
 
   const activeMissions = useMemo(
     () => missions.filter((m) => m.statusRaw !== "completed"),

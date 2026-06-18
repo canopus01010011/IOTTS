@@ -7,7 +7,10 @@ import {
   notifyPickupStarted,
   bumpUserScore,
 } from './missionWorkflowService.js';
-import { startMissionGpsSimulation } from './gpsSimulationService.js';
+import {
+  startMissionGpsSimulation,
+  stopMissionGpsSimulation,
+} from './gpsSimulationService.js';
 import { assertWarehouseScanAllowed } from '../utils/missionSchedule.js';
 
 export interface ScanData {
@@ -169,6 +172,9 @@ export class DeliveryService {
       confirmation_status: 'confirmed',
     });
 
+    if (mission.container_id) {
+      await stopMissionGpsSimulation(mission.id, mission.container_id);
+    }
     await mission.update({ status: 'completed', end_date: new Date() });
     await applyDeliveryStatuses(mission);
     await rewardMissionCompletion(mission);

@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../services/api'
-import Sidebar from '../components/Sidebar'
-import TopBar  from '../components/TopBar'
+import DashboardLayout from '../components/DashboardLayout'
+import StatCard from '../components/StatCard'
 
 const avatarColors = ['#1d4ed8', '#0f6e56', '#712b13', '#534ab7', '#854f0b', '#0c447c']
 
@@ -110,27 +110,15 @@ export default function Drivers() {
   }
 
   return (
-    <div className="flex min-h-screen" style={{ background: '#0a0f1e' }}>
-      <Sidebar />
-      <div className="flex-1 flex flex-col">
-        <TopBar title="Conducteurs" />
-        <main className="flex-1 p-6">
-
-          <div className="grid grid-cols-4 gap-3 mb-5">
+    <DashboardLayout title="Conducteurs">
+          <div className="stat-grid stagger-children" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
             {[
-              { label: 'Total conducteurs', value: stats.total,      color: '#e2e8f0' },
-              { label: 'Disponibles',       value: stats.dispo,      color: '#4ade80' },
-              { label: 'En mission',        value: stats.actifs,     color: '#60a5fa' },
-              { label: 'En attente',        value: stats.enAttente,  color: '#fbbf24' },
-            ].map((s) => (
-              <div
-                key={s.label}
-                className="rounded-xl p-4"
-                style={{ background: '#111827', border: '0.5px solid rgba(59,130,246,.15)' }}
-              >
-                <p className="text-xl font-medium" style={{ color: s.color }}>{s.value}</p>
-                <p className="text-xs mt-1" style={{ color: 'rgba(148,163,184,.5)' }}>{s.label}</p>
-              </div>
+              { label: 'Total conducteurs', value: stats.total, color: '#e2e8f0', icon: '⬡' },
+              { label: 'Disponibles', value: stats.dispo, color: '#4ade80', icon: '✓' },
+              { label: 'En mission', value: stats.actifs, color: '#60a5fa', icon: '◎' },
+              { label: 'En attente', value: stats.enAttente, color: '#fbbf24', icon: '◷' },
+            ].map((s, i) => (
+              <StatCard key={s.label} {...s} delay={i * 50} />
             ))}
           </div>
 
@@ -275,8 +263,6 @@ export default function Drivers() {
             </div>
           )}
 
-        </main>
-      </div>
-    </div>
+    </DashboardLayout>
   )
 }

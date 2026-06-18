@@ -1,5 +1,10 @@
+import { getMissionById } from "@/app/services/missions.service";
+import { mapMissionForCard } from "@/app/utils/missionMapper";
+import { notifyMissionRefresh } from "@/app/utils/missionRefresh";
+import { useFocusEffect } from "@react-navigation/native";
+import { useLocalSearchParams } from "expo-router";
 import { Phone, Truck } from "lucide-react-native";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -21,14 +26,45 @@ import { useMissions } from "@/hooks/useMissions";
 
 const { width, height } = Dimensions.get("window");
 
+function resolveContainerId(raw: Record<string, unknown> | undefined): string | undefined {
+  if (!raw) return undefined;
+  const id = raw.container_id ?? raw.containerId;
+  return id != null ? String(id) : undefined;
+}
+
 export default function MapScreen() {
   const mapRef = useRef<MapView | null>(null);
+  const { missionId: routeMissionId } = useLocalSearchParams<{ missionId?: string }>();
   const { location, loading: locationLoading, enabled } = useLocation();
-  const { activeMission } = useMissions();
+  const { activeMission, refetch } = useMissions();
   const { user } = useAuth();
+  const [routeMission, setRouteMission] = useState<ReturnType<typeof mapMissionForCard> | null>(
+    null,
+  );
 
-  const containerId = (activeMission?.raw as Record<string, unknown>)
-    ?.container_id as string | undefined;
+  useFocusEffect(
+    useCallback(() => {
+      void refetch();
+      if (routeMissionId) {
+        void getMissionById(String(routeMissionId))
+          .then((m) => setRouteMission(mapMissionForCard(m as Record<string, unknown>)))
+          .catch(() => setRouteMission(null));
+      }
+    }, [refetch, routeMissionId]),
+  );
+
+  const displayMission = useMemo(() => {
+    if (routeMissionId && routeMission?.id === routeMissionId) return routeMission;
+    if (routeMissionId) {
+      const fromList = activeMission?.id === routeMissionId ? activeMission : null;
+      return fromList ?? routeMission ?? activeMission;
+    }
+    return activeMission;
+  }, [routeMissionId, routeMission, activeMission]);
+
+  const containerId = resolveContainerId(
+    displayMission?.raw as Record<string, unknown> | undefined,
+  );
 
   const {
     latitude: iotLat,
@@ -42,9 +78,9 @@ export default function MapScreen() {
   const [distance, setDistance] = useState("");
   const [duration, setDuration] = useState("");
 
-  const site = activeMission?.raw
-    ? ((activeMission.raw as Record<string, any>).Site ??
-      (activeMission.raw as Record<string, any>).site)
+  const site = displayMission?.raw
+    ? ((displayMission.raw as Record<string, any>).Site ??
+      (displayMission.raw as Record<string, any>).site)
     : null;
 
   const destination =
@@ -83,8 +119,8 @@ export default function MapScreen() {
 
   const contactPhone =
     user?.role === "driver"
-      ? (activeMission?.raw as Record<string, any>)?.technician?.phone
-      : (activeMission?.raw as Record<string, any>)?.driver?.phone;
+      ? (displayMission?.raw as Record<string, any>)?.technician?.phone
+      : (displayMission?.raw as Record<string, any>)?.driver?.phone;
 
   const showDirections =
     !!destination &&
@@ -125,7 +161,7 @@ export default function MapScreen() {
     );
   }
 
-  if (!activeMission || !destination) {
+  if (!displayMission || !destination) {
     return (
       <View style={styles.center}>
         <Text style={{ color: "white" }}>No active mission with site location</Text>
@@ -133,15 +169,34 @@ export default function MapScreen() {
     );
   }
 
-  if (activeMission.statusRaw !== "in-progress") {
+  if (!containerId) {
     return (
       <View style={styles.center}>
         <Text style={{ color: "white", textAlign: "center", paddingHorizontal: 24 }}>
-          Mission {activeMission.id} — en attente
+          Mission {displayMission.id} has no IoT container
+        </Text>
+        <Text style={{ color: "#9ca3af", marginTop: 8, textAlign: "center", paddingHorizontal: 24 }}>
+          Import a mission JSON with container_id (CTR-IOT-001…) from web admin.
+        </Text>
+      </View>
+    );
+  }
+
+  if (displayMission.statusRaw !== "in-progress") {
+    return (
+      <View style={styles.center}>
+        <Text style={{ color: "white", textAlign: "center", paddingHorizontal: 24 }}>
+          Mission {displayMission.id} — en attente
         </Text>
         <Text style={{ color: "#9ca3af", marginTop: 8, textAlign: "center", paddingHorizontal: 24 }}>
           Le conducteur assigné doit scanner le QR de la mission (MIS-…) à l&apos;entrepôt Oued Smar.
         </Text>
+        <Pressable
+          style={[styles.callBtn, { marginTop: 16 }]}
+          onPress={() => notifyMissionRefresh()}
+        >
+          <Text style={styles.callText}>Actualiser</Text>
+        </Pressable>
       </View>
     );
   }
@@ -165,7 +220,7 @@ export default function MapScreen() {
 
         <Marker coordinate={warehouse} title={WAREHOUSE.name} pinColor="#f59e0b" />
 
-        <Marker coordinate={destination} title={activeMission.site} pinColor="#22c55e" />
+        <Marker coordinate={destination} title={displayMission.site} pinColor="#22c55e" />
 
         {iotCoordinate && (
           <Marker coordinate={iotCoordinate} title="Container (IoT)">
@@ -215,11 +270,11 @@ export default function MapScreen() {
       </MapView>
 
       <View style={styles.card}>
-        <Text style={styles.title}>{activeMission.site}</Text>
-        <Text style={styles.sub}>{activeMission.address || activeMission.company}</Text>
+        <Text style={styles.title}>{displayMission.site}</Text>
+        <Text style={styles.sub}>{displayMission.address || displayMission.company}</Text>
 
         <Text style={styles.info}>
-          📦 {activeMission.items} items • {activeMission.status}
+          📦 {displayMission.items} items • {displayMission.status}
         </Text>
 
         {containerId ? (

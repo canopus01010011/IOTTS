@@ -10,11 +10,33 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
-2. Start the app
+2. Start the **backend** (from repo `backend/`, port 5000):
 
    ```bash
-   npx expo start
+   npm install
+   npm run dev
    ```
+
+3. Configure API URL (only if login still fails):
+
+   ```bash
+   cd mobile_app
+   npm run env:api    # writes your PC LAN IP to .env
+   npx expo start -c  # -c clears cache after .env changes
+   ```
+
+   Default `.env` uses `EXPO_PUBLIC_API_URL=auto` so Expo Go picks the same IP as Metro.
+   Android emulator uses `10.0.2.2` automatically when Metro host is localhost.
+
+4. Start the app (**Expo Go** on your phone)
+
+   ```bash
+   npx expo start --lan
+   ```
+
+   - Phone and PC must be on the **same Wi‑Fi**
+   - In Expo Go, scan the QR code (use **LAN**, not **Tunnel** — tunnel cannot reach `localhost:5000` on your PC)
+   - Login screen shows `API: http://192.168.x.x:5000/api` in dev — that IP must match your PC (`ipconfig`)
 
 In the output, you'll find options to open the app in a
 

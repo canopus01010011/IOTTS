@@ -32,4 +32,21 @@ Every 30 seconds for the battery percentage
 gps_simulator.py → publishes to MQTT broker (HiveMQ)
 
 ## Consumer
-mqtt_bridge.py → receives from broker → POST to backend REST API
+Node backend `mqttBridge.ts` subscribes to `ericsson/sites/+/+/gps`, saves to PostgreSQL, emits Socket.IO `gps-update`. Web admin and mobile read `GET /api/gps/container/:id/live` and `/history`.
+
+## Mission-triggered simulation (QR scan)
+
+When a driver scans a mission QR at the warehouse, the backend publishes:
+
+| Topic | Payload |
+|---|---|
+| `ericsson/simulation/start/{deviceSerial}` | `{"missionId":"MIS-…","action":"start","warehouse":"Entrepôt Oued Smar"}` |
+| `ericsson/simulation/stop/{deviceSerial}` | `{"missionId":"MIS-…","action":"stop"}` |
+
+Run the simulator in listen mode (default when started via `start.py` with `IOT_RUN_SIMULATOR=true`):
+
+```bash
+python gps_simulator.py --listen
+```
+
+The simulator publishes GPX waypoints on `ericsson/sites/{siteID}/{deviceID}/gps` only for the device that received a start message. Technician delivery scan publishes stop.

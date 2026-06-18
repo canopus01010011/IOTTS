@@ -8,7 +8,8 @@ import { getCachedGps, setCachedGps } from "@/app/utils/gpsCache";
 import { useOffline } from "@/context/OfflineContext";
 import { useEffect, useState } from "react";
 
-const POLL_MS = 10000;
+/** Align with iot_system GPS_INTERVAL (default 5s) for live map after QR scan */
+const POLL_MS = 5000;
 
 export function useLiveGps(containerId?: string | null) {
   const [device, setDevice] = useState<LiveGpsDevice | null>(null);

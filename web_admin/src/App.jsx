@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import AnimatedBackground from './components/AnimatedBackground.jsx'
 import api from './services/api'
 import Landing       from './pages/Landing'
 import Login         from './pages/Login'
@@ -51,17 +52,23 @@ function PrivateRoute() {
 
   if (checking) {
     return (
-      <div style={{
-        minHeight: '100vh', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', background: '#0a0f1e', color: '#94a3b8',
-        fontSize: 13,
-      }}>
-        Vérification de la session…
+      <div className="app-loader">
+        <div className="app-loader__ring" />
+        <span>Vérification de la session…</span>
       </div>
     )
   }
 
   return allowed ? <Outlet /> : <Navigate to="/login" replace />
+}
+
+function AdminChrome() {
+  return (
+    <>
+      <AnimatedBackground variant="admin" />
+      <Outlet />
+    </>
+  )
 }
 
 export default function App() {
@@ -72,6 +79,7 @@ export default function App() {
       <Route path="/register" element={<Register />} />
 
       <Route element={<PrivateRoute />}>
+        <Route element={<AdminChrome />}>
         <Route path="/dashboard"                  element={<Dashboard />} />
         <Route path="/dashboard/missions"         element={<CreateMission />} />
         <Route path="/dashboard/suivi"            element={<SuiviMissions />} />
@@ -84,6 +92,7 @@ export default function App() {
         <Route path="/dashboard/containers"      element={<Containers />} />
         <Route path="/dashboard/settings"         element={<Settings />} />
         <Route path="/dashboard/create-user"      element={<CreateUser />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

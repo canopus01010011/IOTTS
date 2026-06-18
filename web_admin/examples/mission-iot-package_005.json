@@ -1,5 +1,5 @@
 {
-  "reference": "MSN-IOT-PKG005-BIRT",
+  "reference": "MSN-IOT-PKG005-BIRT12",
   "iot_route": "OS_BIRT",
   "departure": {
     "name": "Warehouse Oued Smar",
@@ -8,12 +8,12 @@
     "longitude": 3.16704
   },
   "status": "pending",
- "scheduled_start_date": "2026-05-21T23:10:30.000Z",
-"scheduled_end_date": "2026-05-21T23:59:00.000Z",
-  "driver_id": "USR-Y6S76X",
-  "technician_id": "USR-GB3NNG",
+ "scheduled_start_date": "2026-05-30T15:20:30.000Z",
+"scheduled_end_date": "2026-05-30T16:50:00.000Z",
+  "driver_id": "USR-N2ZC39",
+  "technician_id": "USR-2NBSJ3",
   "site": {
-    "name": "Livraison Baba Hssen",
+    "name": "Livraison Birtouta 09",
     "address": "Rue Bouhadja Ali, 16000 Birtouta, Algeria",
     "latitude": 36.648324,
     "longitude": 3.007218
@@ -38,7 +38,7 @@
   {
     "type": "Équipement télécom",
     "label": "Antenne LTE",
-    "serial_number": "SN-IOT-PKG005-004",
+    "serial_number": "SN-IOT-PKG005-005",
     "model": "Poynting XPOL-2",
     "quantity": 2,
     "equipment_status": "in_use"
@@ -53,11 +53,11 @@
   }
  ],
   "container": {
-    "qr_code": "CTR-IOT-005",
+    "qr_code": "CTR-IOT-010",
     "capacity": 120,
     "status": "available",
     "gps_device": {
-      "device_serial_number": "package_005",
+      "device_serial_number": "package_010",
       "battery_level": 100,
       "device_status": "inactive"
     }

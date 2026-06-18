@@ -13,6 +13,13 @@ const IOT_DEVICES = [
   { qr_code: 'CTR-IOT-001', capacity: 120, serial: 'package_001' },
   { qr_code: 'CTR-IOT-002', capacity: 120, serial: 'package_002' },
   { qr_code: 'CTR-IOT-003', capacity: 120, serial: 'package_003' },
+  { qr_code: 'CTR-IOT-004', capacity: 120, serial: 'package_004' },
+  { qr_code: 'CTR-IOT-005', capacity: 120, serial: 'package_005' },
+  { qr_code: 'CTR-IOT-006', capacity: 120, serial: 'package_006' },
+  { qr_code: 'CTR-IOT-007', capacity: 120, serial: 'package_007' },
+  { qr_code: 'CTR-IOT-008', capacity: 120, serial: 'package_008' },
+  { qr_code: 'CTR-IOT-009', capacity: 120, serial: 'package_009' },
+  { qr_code: 'CTR-IOT-010', capacity: 120, serial: 'package_010' },
 ];
 
 async function seed() {

@@ -1,191 +1,238 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-
-<head>
-  <meta charset="UTF-8" />
-  <title>QR codes — simulations IoT (Oued Smar)</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #0f172a;
-      color: #e2e8f0;
-      padding: 24px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    h1 {
-      font-size: 1.25rem;
-    }
-
-    h2 {
-      font-size: 1rem;
-      color: #fbbf24;
-      margin-top: 32px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 24px;
-      margin-top: 16px;
-    }
-
-    .card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 20px;
-      text-align: center;
-    }
-
-    .card h3 {
-      font-size: 0.95rem;
-      color: #60a5fa;
-      margin: 0 0 8px;
-    }
-
-    .card p {
-      font-size: 12px;
-      color: #94a3b8;
-      margin: 4px 0;
-    }
-
-    .qr {
-      margin: 16px auto;
-      display: inline-block;
-      background: #fff;
-      padding: 8px;
-      border-radius: 8px;
-    }
-
-    .plain {
-      font-family: monospace;
-      font-size: 16px;
-      color: #4ade80;
-      margin-top: 12px;
-      word-break: break-all;
-    }
-
-    .note {
-      color: #94a3b8;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    @media print {
+  <head>
+    <meta charset="UTF-8" />
+    <title>QR codes — simulations IoT (Oued Smar)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
       body {
-        background: #fff;
-        color: #000;
+        font-family: system-ui, sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        padding: 24px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        font-size: 1.25rem;
+      }
+
+      h2 {
+        font-size: 1rem;
+        color: #fbbf24;
+        margin-top: 32px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 24px;
+        margin-top: 16px;
       }
 
       .card {
-        break-inside: avoid;
-        border-color: #ccc;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
       }
-    }
-  </style>
-</head>
 
-<body>
-  <h1>Simulations IoT — Entrepôt Oued Smar</h1>
+      .card h3 {
+        font-size: 0.95rem;
+        color: #60a5fa;
+        margin: 0 0 8px;
+      }
 
-  <p class="note">
-    <strong>Workflow :</strong> importez le JSON mission → récupérez l’ID MIS-… →
-    imprimez QR → scan conducteur → démarrage simulation GPS.
-  </p>
+      .card p {
+        font-size: 12px;
+        color: #94a3b8;
+        margin: 4px 0;
+      }
 
-  <h2>🏭 Entrepôt — point de départ</h2>
-  <div class="grid">
-    <div class="card">
-      <h3>Entrepôt Oued Smar</h3>
-      <p>36.706559, 3.16704</p>
-      <div class="qr" id="qr-warehouse"></div>
-      <div class="plain">WAREHOUSE-OUED-SMAR</div>
+      .qr {
+        margin: 16px auto;
+        display: inline-block;
+        background: #fff;
+        padding: 8px;
+        border-radius: 8px;
+      }
+
+      .plain {
+        font-family: monospace;
+        font-size: 16px;
+        color: #4ade80;
+        margin-top: 12px;
+        word-break: break-all;
+      }
+
+      .note {
+        color: #94a3b8;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      @media print {
+        body {
+          background: #fff;
+          color: #000;
+        }
+
+        .card {
+          break-inside: avoid;
+          border-color: #ccc;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Simulations IoT — Entrepôt Oued Smar</h1>
+
+    <p class="note">
+      <strong>Workflow :</strong> importez le JSON mission → récupérez l’ID
+      MIS-… → imprimez QR → scan conducteur → démarrage simulation GPS.
+    </p>
+
+    <h2>🏭 Entrepôt — point de départ</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Entrepôt Oued Smar</h3>
+        <p>36.706559, 3.16704</p>
+        <div class="qr" id="qr-warehouse"></div>
+        <div class="plain">WAREHOUSE-OUED-SMAR</div>
+      </div>
     </div>
-  </div>
 
-  <h2>📦 Conteneurs</h2>
-  <div class="grid" id="grid-containers"></div>
+    <h2>📦 Conteneurs</h2>
+    <div class="grid" id="grid-containers"></div>
 
-  <h2>🚚 Missions — QR conducteur</h2>
-  <div class="grid" id="grid-missions"></div>
+    <h2>🚚 Missions — QR conducteur</h2>
+    <div class="grid" id="grid-missions"></div>
 
-  <script>
-    const warehouse = { payload: 'WAREHOUSE-OUED-SMAR' };
+    <script>
+      const warehouse = { payload: "WAREHOUSE-OUED-SMAR" };
 
-    // ✅ UPDATED ROUTES (With the new Birtouta mission added)
-    const routes = [
-      {
-        route: 'OS_Draria',
-        ref: 'MSN-IOT-PKG001-DRARIA',
-        qr: 'CTR-IOT-001',
-        device: 'package_001',
-        json: 'mission-iot-package_001.json'
-      },
-      {
-        route: 'OS_Meftah',
-        ref: 'MSN-IOT-PKG002-MEFTAH',
-        qr: 'CTR-IOT-002',
-        device: 'package_002',
-        json: 'mission-iot-package_002.json'
-      },
-      {
-        route: 'OS_Cheraga',
-        ref: 'MSN-IOT-PKG003-CHERAGA',
-        qr: 'CTR-IOT-003',
-        device: 'package_003',
-        json: 'mission-iot-package_003.json'
-      },
-      {
-        route: 'OS_BBH',
-        ref: 'MSN-IOT-PKG004-BBH',
-        qr: 'CTR-IOT-004',
-        device: 'package_004',
-        json: 'mission-iot-package_004.json'
-      },
+      // ✅ ALL 10 SIMULATION ROUTES
+      const routes = [
+        {
+          route: "OS_Draria",
+          ref: "MSN-IOT-PKG001-DRARIA",
+          qr: "CTR-IOT-001",
+          device: "package_001",
+          json: "mission-iot-package_001.json",
+          simulation_json: "simulation-package_001.json",
+        },
+        {
+          route: "OS_Meftah",
+          ref: "MSN-IOT-PKG002-MEFTAH",
+          qr: "CTR-IOT-002",
+          device: "package_002",
+          json: "mission-iot-package_002.json",
+          simulation_json: "simulation-package_002.json",
+        },
+        {
+          route: "OS_Cheraga",
+          ref: "MSN-IOT-PKG003-CHERAGA",
+          qr: "CTR-IOT-003",
+          device: "package_003",
+          json: "mission-iot-package_003.json",
+          simulation_json: "simulation-package_003.json",
+        },
+        {
+          route: "OS_BabaHassen",
+          ref: "MSN-IOT-PKG004-BBH",
+          qr: "CTR-IOT-004",
+          device: "package_004",
+          json: "mission-iot-package_004.json",
+          simulation_json: "simulation-package_004.json",
+        },
+        {
+          route: "OS_Birtouta",
+          ref: "MSN-IOT-PKG005-BIRT",
+          qr: "CTR-IOT-005",
+          device: "package_005",
+          json: "mission-iot-package_005.json",
+          simulation_json: "simulation-package_005.json",
+        },
+        {
+          route: "OS_APN",
+          ref: "MSN-IOT-PKG006-APN",
+          qr: "CTR-IOT-006",
+          device: "package_006",
+          json: "mission-iot-package_006.json",
+          simulation_json: "simulation-package_006.json",
+        },
+        {
+          route: "OS_Bouzareah",
+          ref: "MSN-IOT-PKG007-BOUZAREAH",
+          qr: "CTR-IOT-007",
+          device: "package_007",
+          json: "mission-iot-package_007.json",
+          simulation_json: "simulation-package_007.json",
+        },
+        {
+          route: "OS_HusseinDey",
+          ref: "MSN-IOT-PKG008-HUSSEIN-DEY",
+          qr: "CTR-IOT-008",
+          device: "package_008",
+          json: "mission-iot-package_008.json",
+          simulation_json: "simulation-package_008.json",
+        },
+        {
+          route: "OS_Sablettes",
+          ref: "MSN-IOT-PKG009-SABLETTES",
+          qr: "CTR-IOT-009",
+          device: "package_009",
+          json: "mission-iot-package_009.json",
+          simulation_json: "simulation-package_009.json",
+        },
+        {
+          route: "OS_Souakria",
+          ref: "MSN-IOT-PKG010-SOUAKRIA",
+          qr: "CTR-IOT-010",
+          device: "package_010",
+          json: "mission-iot-package_010.json",
+          simulation_json: "simulation-package_010.json",
+        },
+      ];
 
-      // ✅ NEW MISSION BIRT (Birtouta) ADDED HERE
-      {
-        route: 'OS_BIRT',
-        ref: 'MSN-IOT-PKG005-BIRT',
-        qr: 'CTR-IOT-005',
-        device: 'package_005',
-        json: 'mission-iot-package_005.json'
+      const params = new URLSearchParams(location.search);
+
+      const missionIds = {
+        OS_Draria: params.get("draria") || "MIS-REMPLACER-DRARIA",
+        OS_Meftah: params.get("meftah") || "MIS-REMPLACER-MEFTAH",
+        OS_Cheraga: params.get("cheraga") || "MIS-REMPLACER-CHERAGA",
+        OS_BabaHassen: params.get("bbh") || "MIS-REMPLACER-BBH",
+        OS_Birtouta: params.get("birt") || "MIS-REMPLACER-BIRT",
+        OS_APN: params.get("apn") || "MIS-REMPLACER-APN",
+        OS_Bouzareah: params.get("bouzareah") || "MIS-REMPLACER-BOUZAREAH",
+        OS_HusseinDey: params.get("hussein_dey") || "MIS-REMPLACER-HUSSEIN-DEY",
+        OS_Sablettes: params.get("sablettes") || "MIS-REMPLACER-SABLETTES",
+        OS_Souakria: params.get("souakria") || "MIS-REMPLACER-SOUAKRIA",
+      };
+
+      function addQr(elId, text) {
+        new QRCode(document.getElementById(elId), {
+          text,
+          width: 180,
+          height: 180,
+        });
       }
-    ];
 
-    const params = new URLSearchParams(location.search);
+      // warehouse QR
+      addQr("qr-warehouse", warehouse.payload);
 
-    const missionIds = {
-      OS_Draria: params.get('draria') || 'MIS-REMPLACER-DRARIA',
-      OS_Meftah: params.get('meftah') || 'MIS-REMPLACER-MEFTAH',
-      OS_Cheraga: params.get('cheraga') || 'MIS-REMPLACER-CHERAGA',
-      OS_BBH: params.get('bbh') || 'MIS-REMPLACER-BBH',
-      OS_BIRT: params.get('birt') || 'MIS-REMPLACER-BIRT' // ✅ NEW PARAMETER
-    };
+      // containers
+      const gridC = document.getElementById("grid-containers");
+      routes.forEach((c) => {
+        const card = document.createElement("div");
+        card.className = "card";
 
-    function addQr(elId, text) {
-      new QRCode(document.getElementById(elId), {
-        text,
-        width: 180,
-        height: 180
-      });
-    }
+        const id = "qr-c-" + c.qr;
 
-    // warehouse QR
-    addQr('qr-warehouse', warehouse.payload);
-
-    // containers
-    const gridC = document.getElementById('grid-containers');
-    routes.forEach((c) => {
-      const card = document.createElement('div');
-      card.className = 'card';
-
-      const id = 'qr-c-' + c.qr;
-
-      card.innerHTML = `
+        card.innerHTML = `
         <h3>${c.route}</h3>
         <p>Conteneur · ${c.device}</p>
         <p>${c.json}</p>
@@ -193,35 +240,35 @@
         <div class="plain">${c.qr}</div>
       `;
 
-      gridC.appendChild(card);
-      addQr(id, c.qr);
-    });
+        gridC.appendChild(card);
+        addQr(id, c.qr);
+      });
 
-    // missions
-    const gridM = document.getElementById('grid-missions');
-    routes.forEach((c) => {
-      const mis = missionIds[c.route];
+      // missions
+      const gridM = document.getElementById("grid-missions");
+      routes.forEach((c) => {
+        const mis = missionIds[c.route];
 
-      const card = document.createElement('div');
-      card.className = 'card';
+        const card = document.createElement("div");
+        card.className = "card";
 
-      const id = 'qr-m-' + c.route;
+        const id = "qr-m-" + c.route;
 
-      card.innerHTML = `
+        card.innerHTML = `
         <h3>${c.route}</h3>
         <p>Réf. import : ${c.ref}</p>
         <p>Conducteur scanne :</p>
         <div class="qr" id="${id}"></div>
         <div class="plain">${mis}</div>
         <p style="margin-top:8px;font-size:11px">
+          ✅ <strong>Simulation démarrera uniquement après ce scan</strong><br/>
           Technicien (site) : même MIS à la livraison
         </p>
       `;
 
-      gridM.appendChild(card);
-      addQr(id, mis);
-    });
-  </script>
-</body>
-
+        gridM.appendChild(card);
+        addQr(id, mis);
+      });
+    </script>
+  </body>
 </html>

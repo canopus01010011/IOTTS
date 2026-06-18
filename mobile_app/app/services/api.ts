@@ -1,5 +1,4 @@
-const baseURL =
-  process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:5000/api";
+import { API_BASE_URL, EXPO_GO_CONNECTION_HINT } from "@/constants/apiConfig";
 
 class APIClient {
   private baseURL: string;
@@ -18,7 +17,8 @@ class APIClient {
     path: string,
     options: RequestInit = {},
   ): Promise<T> {
-    const url = `${this.baseURL}${path}`;
+    const pathPart = path.startsWith("/") ? path : `/${path}`;
+    const url = `${this.baseURL}${pathPart}`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
@@ -89,7 +89,7 @@ class APIClient {
       if (error instanceof Error) {
         if (error.name === "AbortError") {
           throw new Error(
-            "Request timed out. Check that the backend is running and EXPO_PUBLIC_API_URL points to your PC (use LAN IP on a physical device, not localhost).",
+            `Request timed out (${url}). Start the backend (npm run dev in backend/) and ensure the phone and PC are on the same Wi‑Fi.`,
           );
         }
         if (
@@ -97,7 +97,9 @@ class APIClient {
           error.message.includes("Failed to fetch")
         ) {
           throw new Error(
-            "Cannot reach the server. Start the backend and set EXPO_PUBLIC_API_URL in mobile_app/.env to http://YOUR_PC_IP:5000/api",
+            `Cannot reach ${this.baseURL}. ` +
+              EXPO_GO_CONNECTION_HINT +
+              " Or run: cd mobile_app && npm run env:api",
           );
         }
       }
@@ -134,5 +136,5 @@ class APIClient {
   }
 }
 
-const api = new APIClient(baseURL);
+const api = new APIClient(API_BASE_URL);
 export default api;

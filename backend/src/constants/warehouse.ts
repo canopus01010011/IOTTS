@@ -6,12 +6,22 @@ export const WAREHOUSE = {
   longitude: 3.16704,
 } as const;
 
-/** device_serial_number → route GPX (iot_system) */
+/** device_serial_number → iot_system route name (GET /routes/{name}) */
 export const IOT_ROUTE_BY_DEVICE: Record<string, string> = {
-  package_001: 'OS_Draria',
-  package_002: 'OS_Meftah',
-  package_003: 'OS_Cheraga',
+  package_001: 'OS-Draria',
+  package_002: 'OS-Meftah',
+  package_003: 'OS-Cheraga',
+  package_004: 'OS-Bouzareah',
+  package_005: 'OS-BabaHassen',
+  package_006: 'OS-Souakria',
+  package_007: 'OS-APN',
+  package_008: 'OS-HusseinDey',
+  package_009: 'OS-Birtouta',
+  package_010: 'OS-Sablettes',
 };
 
 export const MQTT_SIMULATION_START_PREFIX =
   process.env.MQTT_SIMULATION_START_TOPIC || 'ericsson/simulation/start';
+
+export const MQTT_SIMULATION_STOP_PREFIX =
+  process.env.MQTT_SIMULATION_STOP_TOPIC || 'ericsson/simulation/stop';

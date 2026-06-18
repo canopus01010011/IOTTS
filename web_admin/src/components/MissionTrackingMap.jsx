@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import api from '../services/api'
 import { WAREHOUSE } from '../constants/warehouse'
 
-const POLL_MS = 10000
+/** Match iot_system GPS publish interval (default 5s) */
+const POLL_MS = 5000
 
 function hasValidCoords(lat, lng) {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false

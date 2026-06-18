@@ -1,3 +1,4 @@
+import { notifyMissionRefresh } from "@/app/utils/missionRefresh";
 import { scanDelivery } from "@/app/services/delivery.service";
 import { isNetworkError } from "@/app/utils/networkError";
 import { patchCachedMissionStatus } from "@/app/utils/missionsCache";
@@ -105,6 +106,7 @@ export function useQRPage(): QRPageResult {
       }
 
       const result = await scanDelivery(payload);
+      notifyMissionRefresh();
       Alert.alert("Success", result.message, [
         {
           text: "Voir la carte",

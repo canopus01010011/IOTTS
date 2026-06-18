@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import api from '../services/api'
 import { formatEquipmentList, formatDateTime } from '../utils/missionFormat'
-import Sidebar from '../components/Sidebar'
-import TopBar from '../components/TopBar'
+import DashboardLayout from '../components/DashboardLayout'
+import StatCard from '../components/StatCard'
 import { useLanguage } from '../i18n.jsx'
 
 const badgeStyle = {
@@ -39,6 +38,8 @@ const formatMission = (mission) => ({
   statut: statusMap[mission.status] || mission.status,
 })
 
+const TABLE_COLS = '.7fr 1.3fr 1fr 1.4fr .8fr .9fr'
+
 export default function Dashboard() {
   const { t } = useLanguage()
   const [stats, setStats] = useState(emptyStats)
@@ -55,130 +56,90 @@ export default function Dashboard() {
   }, [])
 
   const cards = [
-    { label: t('dashboard.totalMissions'), value: stats.totalMissions, color: '#f8fafc' },
-    { label: t('dashboard.inProgress'), value: stats.inProgressMissions, color: '#60a5fa' },
-    { label: t('dashboard.completed'), value: stats.completedMissions, color: '#4ade80' },
-    { label: t('dashboard.pending'), value: stats.pendingMissions, color: '#fbbf24' },
-    { label: t('nav.technicians'), value: stats.totalTechnicians, color: '#93c5fd', to: '/dashboard/technicians' },
-    { label: t('nav.drivers'), value: stats.totalDrivers, color: '#94a3b8', to: '/dashboard/drivers' },
+    { label: t('dashboard.totalMissions'), value: stats.totalMissions, color: '#f8fafc', icon: '◉' },
+    { label: t('dashboard.inProgress'), value: stats.inProgressMissions, color: '#60a5fa', icon: '◎' },
+    { label: t('dashboard.completed'), value: stats.completedMissions, color: '#4ade80', icon: '✓' },
+    { label: t('dashboard.pending'), value: stats.pendingMissions, color: '#fbbf24', icon: '◷' },
+    {
+      label: t('nav.technicians'),
+      value: stats.totalTechnicians,
+      color: '#93c5fd',
+      to: '/dashboard/technicians',
+      icon: '⬢',
+    },
+    {
+      label: t('nav.drivers'),
+      value: stats.totalDrivers,
+      color: '#94a3b8',
+      to: '/dashboard/drivers',
+      icon: '⬡',
+    },
+  ]
+
+  const headers = [
+    t('dashboard.ref'),
+    t('dashboard.site'),
+    t('dashboard.driver'),
+    t('dashboard.equipment'),
+    t('dashboard.date'),
+    t('dashboard.status'),
   ]
 
   return (
-    <div className="flex min-h-screen admin-page">
-      <Sidebar />
-      <div className="flex-1 flex flex-col">
-        <TopBar title={t('dashboard.title')} />
-        <main className="flex-1 admin-main">
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-              gap: 12,
-              marginBottom: 22,
-            }}
-          >
-            {cards.map((card) => {
-              const content = (
-                <>
-                  <p style={{ fontSize: 28, fontWeight: 800, color: card.color, lineHeight: 1 }}>
-                    {card.value}
-                  </p>
-                  <p className="admin-subtle" style={{ marginTop: 8 }}>{card.label}</p>
-                </>
-              )
-              const style = {
-                padding: '18px 20px',
-                textDecoration: 'none',
-                display: 'block',
-                cursor: card.to ? 'pointer' : 'default',
-              }
-              return card.to ? (
-                <Link key={card.label} to={card.to} className="admin-card admin-card-hover" style={style}>
-                  {content}
-                </Link>
-              ) : (
-                <div key={card.label} className="admin-card" style={style}>
-                  {content}
-                </div>
-              )
-            })}
-          </div>
-
-          <div className="admin-card admin-table">
-            <div
-              style={{
-                padding: '15px 20px',
-                borderBottom: '1px solid rgba(59,130,246,.12)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <p className="admin-section-title">{t('dashboard.recentMissions')}</p>
-              <span className="admin-subtle">{t('dashboard.lastFive')}</span>
-            </div>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '.7fr 1.3fr 1fr 1.4fr .8fr .9fr',
-                padding: '9px 20px',
-                fontSize: 10,
-                color: 'rgba(99,179,255,.54)',
-                textTransform: 'uppercase',
-                borderBottom: '1px solid rgba(59,130,246,.08)',
-              }}
-            >
-              {[t('dashboard.ref'), t('dashboard.site'), t('dashboard.driver'), t('dashboard.equipment'), t('dashboard.date'), t('dashboard.status')].map((h) => (
-                <span key={h}>{h}</span>
-              ))}
-            </div>
-
-            {missions.length === 0 ? (
-              <p className="admin-subtle" style={{ padding: 24, textAlign: 'center' }}>
-                {t('dashboard.noRecent')}
-              </p>
-            ) : (
-              missions.map((mission) => (
-                <div
-                  key={mission.id}
-                  className="admin-table-row"
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '.7fr 1.3fr 1fr 1.4fr .8fr .9fr',
-                    padding: '12px 20px',
-                    fontSize: 12,
-                    color: '#cbd5e1',
-                    borderBottom: '1px solid rgba(255,255,255,.04)',
-                    alignItems: 'center',
-                  }}
-                >
-                  <span style={{ color: '#60a5fa', fontWeight: 800 }}>{mission.ref}</span>
-                  <span>{mission.site}</span>
-                  <span style={{ color: 'rgba(148,163,184,.78)' }}>{mission.driver}</span>
-                  <span style={{ color: 'rgba(148,163,184,.64)', fontSize: 11 }}>{mission.equip}</span>
-                  <span style={{ color: 'rgba(148,163,184,.55)', fontSize: 11 }}>{mission.date}</span>
-                  <span
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '3px 9px',
-                      borderRadius: 999,
-                      fontSize: 10,
-                      fontWeight: 800,
-                      ...(badgeStyle[mission.statut] || {}),
-                    }}
-                  >
-                    <span className="status-dot" />
-                    {mission.statut}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-        </main>
+    <DashboardLayout title={t('dashboard.title')}>
+      <div className="stat-grid stagger-children">
+        {cards.map((card, i) => (
+          <StatCard key={card.label} {...card} delay={i * 60} />
+        ))}
       </div>
-    </div>
+
+      <div className="admin-card admin-table">
+        <div
+          style={{
+            padding: '18px 22px',
+            borderBottom: '1px solid rgba(59,130,246,.12)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <p className="admin-section-title">{t('dashboard.recentMissions')}</p>
+          <span className="admin-subtle">{t('dashboard.lastFive')}</span>
+        </div>
+
+        <div className="admin-table-header" style={{ gridTemplateColumns: TABLE_COLS }}>
+          {headers.map((h) => (
+            <span key={h}>{h}</span>
+          ))}
+        </div>
+
+        {missions.length === 0 ? (
+          <p className="admin-subtle" style={{ padding: 32, textAlign: 'center' }}>
+            {t('dashboard.noRecent')}
+          </p>
+        ) : (
+          missions.map((mission, i) => (
+            <div
+              key={mission.id}
+              className="admin-table-row"
+              style={{
+                gridTemplateColumns: TABLE_COLS,
+                animationDelay: `${0.25 + i * 0.05}s`,
+              }}
+            >
+              <span style={{ color: '#60a5fa', fontWeight: 800 }}>{mission.ref}</span>
+              <span>{mission.site}</span>
+              <span style={{ color: 'rgba(148,163,184,.78)' }}>{mission.driver}</span>
+              <span style={{ color: 'rgba(148,163,184,.64)', fontSize: 12 }}>{mission.equip}</span>
+              <span style={{ color: 'rgba(148,163,184,.55)', fontSize: 12 }}>{mission.date}</span>
+              <span className="status-pill" style={badgeStyle[mission.statut] || {}}>
+                <span className="status-dot" />
+                {mission.statut}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+    </DashboardLayout>
   )
 }

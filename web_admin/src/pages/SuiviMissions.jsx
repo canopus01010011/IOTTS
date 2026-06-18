@@ -4,7 +4,7 @@ import Sidebar from '../components/Sidebar'
 import TopBar  from '../components/TopBar'
 import { WAREHOUSE } from '../constants/warehouse'
 
-const POLL_MS = 10000
+const POLL_MS = 5000
 
 const statusMap = {
   pending: 'En attente',
@@ -327,11 +327,11 @@ export default function SuiviMissions() {
   }
 
   return (
-    <div className="flex min-h-screen" style={{ background:'#0a0f1e' }}>
+    <div className="admin-shell">
       <Sidebar />
-      <div className="flex-1 flex flex-col">
+      <div className="admin-shell__main">
         <TopBar title="Suivi des missions" />
-        <main className="flex-1 p-6">
+        <main className="admin-main page-enter">
 
           {loadError && (
             <div className="mb-4 px-4 py-3 rounded-lg text-sm" style={{ background:'rgba(239,68,68,.1)', color:'#f87171' }}>

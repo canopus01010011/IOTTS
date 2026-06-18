@@ -17,6 +17,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { Gear } from "@/components/UI/Gear";
+import { API_BASE_URL } from "@/constants/apiConfig";
 import { ROLES } from "@/constants/roles";
 import { colors } from "@/constants/theme";
 import { useLogin } from "@/hooks/useLogin";
@@ -132,6 +133,13 @@ export default function LoginScreen() {
             )}
           </Pressable>
         </View>
+
+        {__DEV__ ? (
+          <Text style={styles.devApiHint} selectable>
+            API: {API_BASE_URL}
+            {"\n"}Expo Go: same Wi‑Fi, use LAN (not Tunnel) in Expo CLI
+          </Text>
+        ) : null}
 
         <Animated.View style={btnStyle}>
           <Pressable
@@ -257,5 +265,11 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     fontWeight: "700",
+  },
+
+  devApiHint: {
+    fontSize: 11,
+    color: "#6b7280",
+    lineHeight: 16,
   },
 });
